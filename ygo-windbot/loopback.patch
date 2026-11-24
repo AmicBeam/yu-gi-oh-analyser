@@ -1,0 +1,26 @@
+diff --git a/App.config b/App.config
+index 09872a9..e7a6972 100644
+--- a/App.config
++++ b/App.config
+@@ -1,6 +1,7 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <configuration>
+     <appSettings>
++        <add key="ServerBind" value="127.0.0.1"/>
+         <add key="UsePreErrataEffects" value="false"/>
+     </appSettings>
+     <startup> 
+diff --git a/ServerModeHost.cs b/ServerModeHost.cs
+index 0cc136d..77cb7ab 100644
+--- a/ServerModeHost.cs
++++ b/ServerModeHost.cs
+@@ -24,7 +24,8 @@ namespace WindBot
+     {
+         internal static void Run(int serverPort, ParameterizedThreadStart runCallback, ParseServerInfoCallback parseInfoCallback)
+         {
+-            TcpListener mainServer = new TcpListener(IPAddress.Any, serverPort);
++            IPAddress bindAddress = IPAddress.Parse(Config.GetString("ServerBind", "0.0.0.0"));
++            TcpListener mainServer = new TcpListener(bindAddress, serverPort);
+             mainServer.Start();
+             while (true)
+             {
