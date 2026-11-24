@@ -102,7 +102,7 @@ namespace WindBot.Game.AI.Decks
             public int Depth, Score, Rank, Potential;
             public ContinuationKind Continuation;
             public int ActionCount, EngraverRevivalMove = int.MaxValue, FirstTwinSearchMove = int.MaxValue;
-            public int FirstYamaGraveMove = int.MaxValue;
+            public int FirstCaesarSummonMove = int.MaxValue, FirstYamaGraveMove = int.MaxValue;
             public int FirstSweetSendMove = int.MaxValue, FirstNewYearSendWithoutSearch = int.MaxValue;
             public int LinkTwoForLinkOne, PasswordBanishes, NewYearBanished;
             private string _resourceKey;
@@ -1027,6 +1027,14 @@ namespace WindBot.Game.AI.Decks
 
                     var move = new PlanMove { Card = card, Type = ExecutorType.SpSummon, Materials = slots, MaterialIds = materials };
                     var next = p.Next(move);
+                    if (xyz && next.FirstCaesarSummonMove == int.MaxValue)
+                    {
+                        int summonMove = 1;
+                        for (var prior = p; prior.Previous != null; prior = prior.Previous)
+                            if (prior.Move != null)
+                                summonMove++;
+                        next.FirstCaesarSummonMove = summonMove;
+                    }
                     if (LinkRating(card) == 1 && materials.Length == 1 && LinkRating(materials[0]) == 2)
                         next.LinkTwoForLinkOne++;
                     foreach (int i in slots)

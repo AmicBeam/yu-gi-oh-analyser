@@ -197,6 +197,7 @@ namespace WindBot.Game.AI.Decks
                 OwnSummons = _planOwnSummons, EarlyRequiem = _planEarlyRequiem,
                 RequiemDefenseAtNibiruWindow = _planRequiemDefenseAtNibiruWindow,
                 PhotoAtNibiruWindow = _planPhotoAtNibiruWindow, SearchLocked = _searchLocked,
+                FirstCaesarSummonMove = Bot.HasInMonstersZone(Caesar) ? 0 : int.MaxValue,
                 FirstYamaGraveMove = Bot.HasInGraveyard(Yama) || Bot.Banished.Any(card => card.IsCode(Yama)) ? 0 : int.MaxValue,
                 PasswordBanishes = Bot.Banished.Count(card => card.IsCode(Password)),
                 NewYearBanished = Bot.Banished.Count(card => card.IsCode(NewYear)),
@@ -383,7 +384,8 @@ namespace WindBot.Game.AI.Decks
             if (tactical != null && BetterBoardPlan(tactical, candidate))
                 candidate = tactical;
             bool improved = candidate.Score > floor || candidate.Score == floor && retained != null
-                && (candidate.Terminal.Set & SetChallenge) > (retained.Set & SetChallenge)
+                && ((candidate.Terminal.Set & SetChallenge) > (retained.Set & SetChallenge)
+                    || CompareCaesarTiming(candidate.Terminal, retained) > 0)
                 && PreferEnd(candidate.Terminal, retained);
             TracePlanner("draw-replan", string.Join(" ", floor, candidate.Score,
                 improved ? "upgrade" : "keep", timer.ElapsedMilliseconds));
@@ -680,7 +682,8 @@ namespace WindBot.Game.AI.Decks
                 && (move.Card == Deal || move.Card == Scout));
             bool canImproveRequiemTiming = !position.EarlyRequiem && position.OwnSummons < NibiruThreshold
                 && position.Extra.Contains(Requiem) && known.Terminal?.EarlyRequiem != true;
-            if ((!usesSearch && !downgrades && !usesPhoto && !sendsTwin && !canImproveRequiemTiming)
+            bool canImproveCaesarTiming = known.Moves.Any(move => move.Type == ExecutorType.SpSummon && move.Card == Caesar);
+            if ((!usesSearch && !downgrades && !usesPhoto && !sendsTwin && !canImproveRequiemTiming && !canImproveCaesarTiming)
                 || timer.ElapsedMilliseconds >= 400)
                 return null;
             var policy = usesSearch || downgrades || sendsTwin ? BoardSearchPolicy.HoldBackrow : BoardSearchPolicy.PreservePhoto;

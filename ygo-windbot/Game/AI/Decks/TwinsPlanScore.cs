@@ -738,7 +738,7 @@ namespace WindBot.Game.AI.Decks
             Stopwatch timer = null, int timeLimitMs = 0, BoardSearchPolicy policy = BoardSearchPolicy.Reference)
         {
             var beam = new List<PlanPosition> { start };
-            var explored = new Dictionary<string, (int downgrades, int searchMove, int yama, int sweet, int newYear)>();
+            var explored = new Dictionary<string, (int downgrades, int searchMove, int caesar, int yama, int sweet, int newYear)>();
             var scoreCache = timer == null ? null : new Dictionary<string, int>();
             var exactCache = timer == null ? null : new Dictionary<string, (int score, int returnZone)>();
             start.Score = EndBoardScore(start, true);
@@ -772,7 +772,8 @@ namespace WindBot.Game.AI.Decks
                         if (drawPressure && (state.Pending & ~state.Used) == Flag(PlanEffect.FrostDraw))
                             state = DrawWithFrost(state) ?? state;
                         string stateKey = state.SearchKey();
-                        var priorities = (state.LinkTwoForLinkOne, -state.FirstTwinSearchMove, state.FirstYamaGraveMove,
+                        var priorities = (state.LinkTwoForLinkOne, -state.FirstTwinSearchMove,
+                            state.Has(Caesar) ? state.FirstCaesarSummonMove : int.MaxValue, state.FirstYamaGraveMove,
                             state.FirstSweetSendMove, state.FirstNewYearSendWithoutSearch);
                         if (explored.TryGetValue(stateKey, out var previous) && previous.CompareTo(priorities) <= 0)
                             continue;
@@ -870,6 +871,9 @@ namespace WindBot.Game.AI.Decks
             int defensePreference = CompareNibiruDefense(candidate, best);
             if (defensePreference != 0)
                 return defensePreference > 0;
+            int caesarTiming = CompareCaesarTiming(candidate, best);
+            if (caesarTiming != 0)
+                return caesarTiming > 0;
             if (candidate.FirstYamaGraveMove != best.FirstYamaGraveMove)
                 return candidate.FirstYamaGraveMove < best.FirstYamaGraveMove;
             if (candidate.FirstSweetSendMove != best.FirstSweetSendMove)
@@ -898,6 +902,10 @@ namespace WindBot.Game.AI.Decks
                 return candidate.Depth < best.Depth;
             return Occupied(candidate.Field) > Occupied(best.Field);
         }
+
+        private static int CompareCaesarTiming(PlanPosition candidate, PlanPosition best) =>
+            candidate.Has(Caesar) && best.Has(Caesar)
+                ? best.FirstCaesarSummonMove.CompareTo(candidate.FirstCaesarSummonMove) : 0;
 
         private static int TwinSearchesUsed(PlanPosition p) =>
             (p.Fresh(PlanEffect.Password) ? 0 : 1) + (p.Fresh(PlanEffect.Trouble) ? 0 : 1);

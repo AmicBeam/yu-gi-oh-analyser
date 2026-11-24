@@ -83,6 +83,7 @@ namespace WindBot.Game.AI.Decks
             AddExecutor(ExecutorType.Activate, Caesar, EnemyChained);
             AddExecutor(ExecutorType.Activate, Desirae, DesiraeActivate);
             AddExecutor(ExecutorType.Activate, Disconnect, () => EnemyChained() && !HoldDisconnectForTwins());
+            AddExecutor(ExecutorType.Repos, RepositionForLethal);
             AddExecutor(ExecutorType.Activate, Sequence, ActivateSequenceForBurn);
             AddExecutor(ExecutorType.SpSummon, Sequence, PrepareSequenceForBurn);
             AddExecutor(ExecutorType.Activate, Engraver, SendLacrimaWithEngraver);

@@ -613,7 +613,10 @@ namespace WindBot.Game.AI.Decks
                 return null;
             firstMove = firstMove ?? PlanOffered;
             var frontier = new List<PlanPosition> { start };
-            var visited = new HashSet<string> { start.SearchKey() };
+            var visited = new Dictionary<string, (int downgrades, int searchMove, int caesar)>
+            {
+                [start.SearchKey()] = (start.LinkTwoForLinkOne, -start.FirstTwinSearchMove, start.FirstCaesarSummonMove)
+            };
             PlanPosition best = start;
             start.Score = EndBoardScore(start, true);
             int evaluations = 0;
@@ -626,8 +629,13 @@ namespace WindBot.Game.AI.Decks
                         break;
                     foreach (var next in TacticalSuccessors(start, position, firstMove, timer, deadline))
                     {
-                        if (!visited.Add(next.SearchKey()))
+                        string key = next.SearchKey();
+                        int caesarTiming = next.Has(Caesar) ? next.FirstCaesarSummonMove : int.MaxValue;
+                        var priority = (next.LinkTwoForLinkOne, -next.FirstTwinSearchMove, caesarTiming);
+                        if (visited.TryGetValue(key, out var previous)
+                            && (caesarTiming >= previous.caesar || priority.CompareTo(previous) >= 0))
                             continue;
+                        visited[key] = priority;
                         next.Score = EndBoardScore(next, true);
                         next.Potential = ContinuationRank(next) + (next.ActionCount - position.ActionCount) * 12;
                         evaluations++;

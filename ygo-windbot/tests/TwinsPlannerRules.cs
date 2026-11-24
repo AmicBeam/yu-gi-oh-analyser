@@ -377,6 +377,37 @@ internal static class TwinsPlannerRules
         positionType.GetField("PhotoAtNibiruWindow").SetValue(earlyYama, false);
         Check((bool)preferEnd.Invoke(null, new[] { lateYama, earlyYama }),
             "the preferred defense precedes sending Yama early");
+        var earlyCaesar = nextPosition.Invoke(fifth, new object[] { null });
+        var lateCaesar = nextPosition.Invoke(fifth, new object[] { null });
+        var caesarTiming = positionType.GetField("FirstCaesarSummonMove");
+        positionType.GetField("Field").SetValue(earlyCaesar, new[] { caesar, 0, 0, 0, 0, 0, 0 });
+        positionType.GetField("Field").SetValue(lateCaesar, new[] { caesar, 0, 0, 0, 0, 0, 0 });
+        caesarTiming.SetValue(earlyCaesar, 12);
+        caesarTiming.SetValue(lateCaesar, 15);
+        positionType.GetField("FirstYamaGraveMove").SetValue(earlyCaesar, 7);
+        positionType.GetField("FirstYamaGraveMove").SetValue(lateCaesar, 4);
+        Check((bool)preferEnd.Invoke(null, new[] { earlyCaesar, lateCaesar }),
+            "equal Caesar boards prefer the earlier Caesar over the earlier Yama send");
+        positionType.GetField("PhotoAtNibiruWindow").SetValue(earlyCaesar, false);
+        Check((bool)preferEnd.Invoke(null, new[] { lateCaesar, earlyCaesar }),
+            "the preferred Nibiru defense takes precedence over the earlier Caesar");
+        positionType.GetField("PhotoAtNibiruWindow").SetValue(earlyCaesar, true);
+        positionType.GetField("Field").SetValue(earlyCaesar, new[] { Desirae, 0, 0, 0, 0, 0, 0 });
+        Check((bool)preferEnd.Invoke(null, new[] { lateCaesar, earlyCaesar }),
+            "Caesar timing only breaks ties between plans that both end with Caesar");
+        var caesarSetup = Activator.CreateInstance(positionType, true);
+        positionType.GetField("Field").SetValue(caesarSetup, new[] { 60764609, 46640168, Desirae, 0, 0, 0, 0 });
+        positionType.GetField("Hand").SetValue(caesarSetup, new List<int>());
+        positionType.GetField("Deck").SetValue(caesarSetup, new List<int>());
+        positionType.GetField("Grave").SetValue(caesarSetup, new List<int> { requiem });
+        positionType.GetField("Extra").SetValue(caesarSetup, new List<int> { caesar });
+        var referencePolicy = Enum.Parse(type.GetNestedType("BoardSearchPolicy", BindingFlags.NonPublic), "Reference");
+        var caesarPlan = type.GetMethod("FindBoard", Private).Invoke(executor,
+            new object[] { caesarSetup, null, 24, 500, null, 0, referencePolicy });
+        var caesarMoves = (IEnumerable)caesarPlan.GetType().GetField("Moves").GetValue(caesarPlan);
+        var caesarCards = caesarMoves.Cast<object>().Select(move => (int)move.GetType().GetField("Card").GetValue(move));
+        Check(caesarCards.SequenceEqual(new[] { caesar, requiem }),
+            "the planner summons Caesar before equipping Desirae when both orders have the same end board");
         var earlyOnly = nextPosition.Invoke(fifth, new object[] { null });
         positionType.GetField("PhotoAtNibiruWindow").SetValue(sixth, true);
         positionType.GetField("PhotoAtNibiruWindow").SetValue(requiemAlone, true);
@@ -788,6 +819,7 @@ internal static class TwinsPlannerRules
             "drawing another Frost cannot repeat its once-per-turn hand summon");
         CheckChallengeRevival();
         CheckChallengeBattleDefense();
+        CheckLethalReposition();
         Console.WriteLine("Twins planner rules passed");
     }
 
@@ -845,6 +877,55 @@ internal static class TwinsPlannerRules
         duel.Fields[0].SetInitialDeck(new[] { NamedCard.Get(61976639) });
         typeof(TwinsExecutor).GetField("_searchLocked", Private).SetValue(executor, false);
         Check(!activate(), "Challenge reserves the complete New Year cycle instead of reviving New Year for an early search");
+    }
+
+    private static void CheckLethalReposition()
+    {
+        int attack = (int)CardPosition.FaceUpAttack, defense = (int)CardPosition.FaceUpDefence;
+        var main = new MainPhase { CanBattlePhase = true, CanEndPhase = true };
+        var duel = new Duel { Player = 0, Turn = 3, Phase = DuelPhase.Main1, MainPhase = main };
+        for (int player = 0; player < 2; player++)
+            duel.Fields[player].Init(0, 0, player);
+        string dialogPath = Path.Combine(Path.GetDirectoryName(typeof(GameAI).Assembly.Location), "Dialogs", "default.json");
+        var ai = new GameAI(new GameClient(new WindBot.WindBotInfo { Chat = false, Dialog = dialogPath }), duel);
+        ai.Executor = new TwinsExecutor(ai, duel);
+
+        var attacker = new ClientCard(27204311, CardLocation.MonsterZone, 0, attack);
+        var needed = new ClientCard(60764609, CardLocation.MonsterZone, 1, defense);
+        var spare = new ClientCard(31305911, CardLocation.MonsterZone, 2, defense);
+        var blocker = new ClientCard(74677422, CardLocation.MonsterZone, 0, attack) { Controller = 1 };
+        foreach (var card in new[] { attacker, needed, spare, blocker })
+        {
+            typeof(ClientCard).GetProperty("Attack").SetValue(card, card.Data.Attack);
+            typeof(ClientCard).GetProperty("Defense").SetValue(card, card.Data.Defense);
+        }
+        duel.Fields[0].MonsterZone[0] = attacker;
+        duel.Fields[0].MonsterZone[1] = needed;
+        duel.Fields[0].MonsterZone[2] = spare;
+        duel.Fields[1].MonsterZone[0] = blocker;
+        duel.Fields[1].LifePoints = 1800;
+        var search = new ClientCard(37582948, CardLocation.Hand, 0, 0);
+        search.ActionActivateIndex[0] = 0;
+        main.ActivableCards.Add(search);
+        main.ActivableDescs.Add(0);
+        main.ReposableCards.Add(spare);
+
+        Check(ai.OnSelectIdleCmd(main).Action == MainPhaseAction.MainAction.Activate,
+            "a defender missing from the engine's position-change options cannot supply lethal damage");
+        main.ReposableCards.Add(needed);
+        needed.ActionIndex[2] = 1;
+        var action = ai.OnSelectIdleCmd(main);
+        Check(action.Action == MainPhaseAction.MainAction.Repos && action.Index == 1 && needed.IsDefense(),
+            "prioritize the one defender needed for lethal without changing the live board during projection");
+        needed.Position = attack;
+        main.ReposableCards.Remove(needed);
+        Check(ai.OnSelectIdleCmd(main).Action == MainPhaseAction.MainAction.ToBattlePhase,
+            "enter battle after the engine confirms the lethal attacker changed position");
+        needed.Position = defense;
+        main.ReposableCards.Add(needed);
+        duel.Fields[1].LifePoints = 600;
+        Check(ai.OnSelectIdleCmd(main).Action == MainPhaseAction.MainAction.ToBattlePhase,
+            "enter battle directly if the existing attackers already have lethal");
     }
 
     private static void CheckChallengeBattleDefense()

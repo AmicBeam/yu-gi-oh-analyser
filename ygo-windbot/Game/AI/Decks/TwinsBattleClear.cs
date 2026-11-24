@@ -317,13 +317,14 @@ namespace WindBot.Game.AI.Decks
             };
         }
 
-        private int ProjectedAttack(ClientCard card, IList<ClientCard> lostEquips)
+        private int ProjectedAttack(ClientCard card, IList<ClientCard> lostEquips, ICollection<ClientCard> turningToAttack)
         {
-            if (!card.IsFaceup() || !card.IsAttack() || card.Attacked)
+            bool turnsToAttack = turningToAttack?.Contains(card) == true;
+            if (!card.IsFaceup() || card.Attacked || !card.IsAttack() && !turnsToAttack)
                 return 0;
             bool onLiveField = card.Sequence >= 0 && card.Sequence < Bot.MonsterZone.Length
                 && Bot.MonsterZone[card.Sequence] == card;
-            int attack = onLiveField ? card.GetAttackPower() : PrintedAttack(card.Id);
+            int attack = onLiveField ? (turnsToAttack ? card.Attack : card.GetAttackPower()) : PrintedAttack(card.Id);
             attack -= 600 * card.EquipCards.Count(equip => equip.IsCode(Requiem)
                 && !equip.IsDisabled() && lostEquips.Contains(equip));
             return System.Math.Max(0, attack);
@@ -362,15 +363,46 @@ namespace WindBot.Game.AI.Decks
             return Enemy.LifePoints > 0 && ProjectedBattleDamage(position) >= Enemy.LifePoints;
         }
 
-        private int ProjectedBattleDamage(BattlePosition position)
+        private static bool CanSwitchToAttack(ClientCard card) =>
+            card.HasPosition(CardPosition.FaceUpDefence) && !card.Attacked && card.Attack > 0;
+
+        private List<ClientCard> OfferedAttackPositionChanges(BattlePosition position)
+        {
+            return Duel.MainPhase.ReposableCards.Where(card => CanSwitchToAttack(card)
+                && position.Field.Contains(card)).ToList();
+        }
+
+        private bool RepositionForLethal()
+        {
+            if (!OwnMainBeforeBattle() || Duel.MainPhase?.CanBattlePhase != true
+                || !CanSwitchToAttack(Card) || Enemy.LifePoints <= 0)
+                return false;
+            var position = CurrentBattlePosition();
+            if (CanFinishBattle(position))
+                return false;
+            var offered = OfferedAttackPositionChanges(position);
+            var attackers = new HashSet<ClientCard>(offered);
+            if (ProjectedBattleDamage(position, attackers) < Enemy.LifePoints)
+                return false;
+
+            foreach (var candidate in offered.OrderBy(card => card.Attack))
+            {
+                attackers.Remove(candidate);
+                if (ProjectedBattleDamage(position, attackers) < Enemy.LifePoints)
+                    attackers.Add(candidate);
+            }
+            return attackers.Contains(Card);
+        }
+
+        private int ProjectedBattleDamage(BattlePosition position, ICollection<ClientCard> turningToAttack = null)
         {
             int best = 0;
             int burn = CanPlanLacrimaBurn(position) ? LacrimaBurnDamage : 0;
             foreach (ClientCard attacker in position.Field)
             {
                 int tail = position.Field.Where(card => card != attacker)
-                    .Sum(card => ProjectedAttack(card, position.LostEquips));
-                int attack = ProjectedAttack(attacker, position.LostEquips);
+                    .Sum(card => ProjectedAttack(card, position.LostEquips, turningToAttack));
+                int attack = ProjectedAttack(attacker, position.LostEquips, turningToAttack);
                 int damage = LeadDamage(attack, tail, position.Defenders);
                 if (damage > 0 && damage < Enemy.LifePoints && damage + burn >= Enemy.LifePoints)
                     damage += burn;
@@ -388,8 +420,8 @@ namespace WindBot.Game.AI.Decks
                 var grave = position.Grave.Concat(materials).ToList();
                 if (!ReadyForSunny(remaining, grave))
                     continue;
-                int tail = remaining.Sum(card => ProjectedAttack(card, position.LostEquips)) + PrintedAttack(Sunny)
-                    + TwinAttackFromGrave(grave, OpenMainZonesAfter(remaining));
+                int tail = remaining.Sum(card => ProjectedAttack(card, position.LostEquips, turningToAttack))
+                    + PrintedAttack(Sunny) + TwinAttackFromGrave(grave, OpenMainZonesAfter(remaining));
                 best = System.Math.Max(best, LeadDamage(PrintedAttack(Nightfall), tail, position.Defenders));
             }
             return best;
@@ -439,6 +471,16 @@ namespace WindBot.Game.AI.Decks
             }
             interactions += nightfallInteractions;
             int damage = ProjectedBattleDamage(position);
+            if (damage < Enemy.LifePoints && Duel.MainPhase?.CanBattlePhase == true)
+            {
+                var offered = OfferedAttackPositionChanges(position);
+                if (offered.Count != 0)
+                {
+                    int afterReposition = ProjectedBattleDamage(position, offered);
+                    if (afterReposition >= Enemy.LifePoints)
+                        damage = afterReposition;
+                }
+            }
             int removed = Enemy.GetMonsters().Count + Enemy.GetSpells().Count
                 - position.Defenders.Count - position.Backrow.Count;
             // Compare lethal, interactions, cards cleared, damage, then the number of actions.
