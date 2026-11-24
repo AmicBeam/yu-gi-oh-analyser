@@ -79,15 +79,20 @@ func (s *DBSuite) Test_FindCardByName() {
 	db, err := New(s.basePath, "zh-CN")
 	s.Require().NoError(err, "New should not return error")
 
-	exact, maybe, total, err := db.FindCardByName("青眼白龙", 0)
+	const name = "青眼白龙"
+	exact, maybe, total, err := db.FindCardByName(name, 0)
 	s.Require().NoError(err, "FindCardByName should not return error")
 
 	s.Require().NotNil(exact, "exact match should not be nil")
-	s.Assert().Equal("青眼白龙", exact.Name)
+	s.Assert().Equal(name, exact.Name)
 
-	s.Assert().Equal(2, total)
-	s.Assert().Equal(1, len(maybe), "should return 1 partial match (罪 青眼白龙)")
-	s.Assert().Equal("罪 青眼白龙", maybe[0].Name)
+	// New cards can add partial matches to the upstream database.
+	s.Assert().NotEmpty(maybe, "should return partial matches")
+	s.Assert().Len(maybe, min(pageSize, total-1), "total should include the exact match")
+	for _, card := range maybe {
+		s.Assert().Contains(card.Name, name)
+		s.Assert().NotEqual(name, card.Name, "exact match should be returned separately")
+	}
 }
 
 func (s *DBSuite) Test_FindCardByName_Pagination() {
