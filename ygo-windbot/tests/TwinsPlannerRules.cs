@@ -565,10 +565,18 @@ internal static class TwinsPlannerRules
         Check((bool)type.GetMethod("NightfallActivate", Private).Invoke(ai.Executor, null),
             "Nightfall rotates on an empty opponent field in the draw phase");
 
+        var positions = new[] { CardPosition.FaceUpAttack, CardPosition.FaceUpDefence };
+        negateDuel.Player = 1;
+        negateDuel.Turn = 2;
+        negateDuel.Phase = DuelPhase.Main1;
+        Check(ai.OnSelectPosition(27204312, positions) == CardPosition.FaceUpDefence,
+            "Nibiru gives the opponent a face-up Defense Position Token");
+        Check(ai.OnSelectPosition(27204311, positions) == CardPosition.FaceUpAttack,
+            "Nibiru itself retains its normal position selection");
+
         negateDuel.Player = 0;
         negateDuel.Turn = 1;
         negateDuel.Phase = DuelPhase.Main1;
-        var positions = new[] { CardPosition.FaceUpAttack, CardPosition.FaceUpDefence };
         Check(ai.Executor.OnSelectPosition(engraver, positions) == CardPosition.FaceUpDefence,
             "under-2000 Engraver prefers defense while building on turn one");
         Check(ai.Executor.OnSelectPosition(lacrimaFusion, positions) == CardPosition.FaceUpDefence,

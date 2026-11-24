@@ -38,6 +38,7 @@ namespace WindBot.Game.AI.Decks
         private const int Sharvara = 88554436;
         private const int Yama = 24269961;
         private const int Nibiru = 27204311;
+        private const int NibiruToken = 27204312;
         private const int Droll = 94145021;
         private const int Fuwalos = 42141493;
         private const int Crossout = 65681983;
@@ -366,6 +367,9 @@ namespace WindBot.Game.AI.Decks
 
         public override CardPosition OnSelectPosition(int cardId, IList<CardPosition> positions)
         {
+            if (cardId == NibiruToken && positions.Contains(CardPosition.FaceUpDefence))
+                return CardPosition.FaceUpDefence;
+
             var chain = Duel.GetCurrentSolvingChainInfo();
             if (_challengeBattleStarter != 0 && InBattle() && positions.Contains(CardPosition.FaceUpDefence)
                 && chain?.ActivatePlayer == 0
