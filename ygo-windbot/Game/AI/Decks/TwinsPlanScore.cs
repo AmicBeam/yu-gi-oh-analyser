@@ -224,7 +224,10 @@ namespace WindBot.Game.AI.Decks
             return score + interaction;
         }
 
-        private static int NetDrawPoints(PlanPosition p) => p.Draws * 4 - p.OpponentDraws * 10;
+        private const int SweetDrawPenalty = 2;
+
+        private static int NetDrawPoints(PlanPosition p) =>
+            p.Draws * 4 - p.OpponentDraws * 10 - (p.RedDrawWithSweetInDeck ? SweetDrawPenalty : 0);
 
         private int AbaoTwinPoints(int[] field, int normalZones, int abaoZone, bool blue, bool heist, bool red)
         {
@@ -907,6 +910,9 @@ namespace WindBot.Game.AI.Decks
                 if (lacrima != 0)
                     return lacrima;
             }
+            int challenge = (candidate.Set & SetChallenge).CompareTo(best.Set & SetChallenge);
+            if (challenge != 0)
+                return challenge;
             int password = best.PasswordBanishes.CompareTo(candidate.PasswordBanishes);
             if (password != 0)
                 return password;
@@ -922,14 +928,12 @@ namespace WindBot.Game.AI.Decks
         {
             bool candidatePhoto = HasPhotoDefense(candidate), bestPhoto = HasPhotoDefense(best);
             bool candidateRequiem = HasRequiemDefense(candidate), bestRequiem = HasRequiemDefense(best);
-            if (!(candidateRequiem || candidatePhoto) || !(bestRequiem || bestPhoto))
+            if ((candidateRequiem || candidatePhoto) != (bestRequiem || bestPhoto))
                 return 0;
             int retainedPhoto = candidatePhoto.CompareTo(bestPhoto);
             if (retainedPhoto != 0)
                 return retainedPhoto;
-            // Both routes already qualify through Photo. Opening Requiem early still wins
-            // the tie, even when Requiem cannot independently earn the defense point.
-            return candidatePhoto ? candidate.EarlyRequiem.CompareTo(best.EarlyRequiem) : 0;
+            return candidate.EarlyRequiem.CompareTo(best.EarlyRequiem);
         }
 
         private static int CompareNightfallReserve(PlanPosition candidate, PlanPosition best)

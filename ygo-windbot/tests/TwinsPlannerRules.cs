@@ -310,6 +310,13 @@ internal static class TwinsPlannerRules
             && (int)score.Invoke(executor, new[] { fifth, (object)true })
                 == (int)score.Invoke(executor, new[] { sixth, (object)true }) + 10,
             "Requiem and live New Year earn one point through the fifth summon");
+        Check(!(bool)hasDefense.Invoke(null, new[] { requiemAlone })
+            && !(bool)hasDefense.Invoke(null, new[] { sixth })
+            && (int)score.Invoke(executor, new[] { requiemAlone, (object)true })
+                == (int)score.Invoke(executor, new[] { sixth, (object)true })
+            && (bool)preferEnd.Invoke(null, new[] { requiemAlone, sixth })
+            && !(bool)preferEnd.Invoke(null, new[] { sixth, requiemAlone }),
+            "with equal scores and neither defense live, prefer Requiem by the fifth summon");
         var bigRedBeforeRequiem = nextPosition.Invoke(position, new object[] { null });
         positionType.GetField("Field").SetValue(bigRedBeforeRequiem, new[] { 0, 0, 0, 0, 0, bigRed, 0 });
         var bigRedIntoRequiem = ((IEnumerable)extraMoves.Invoke(executor, new[] { bigRedBeforeRequiem, (object)requiem }))
@@ -515,10 +522,15 @@ internal static class TwinsPlannerRules
         var comparePreservation = type.GetMethod("CompareBoardPreservation", BindingFlags.Static | BindingFlags.NonPublic);
         var retained = nextPosition.Invoke(position, new object[] { null });
         positionType.GetField("Field").SetValue(retained, new[] { 0, Gryphon, lacrimaFusion, 0, 0, 0, 0 });
+        positionType.GetField("Set").SetValue(retained, 0);
         var spentPassword = nextPosition.Invoke(retained, new object[] { null });
         positionType.GetField("PasswordBanishes").SetValue(spentPassword, 1);
         Check((int)comparePreservation.Invoke(null, new[] { retained, spentPassword }) > 0,
             "equal-score routes preserve Password");
+        var additionalChallenge = nextPosition.Invoke(spentPassword, new object[] { null });
+        positionType.GetField("Set").SetValue(additionalChallenge, (int)positionType.GetField("Set").GetValue(retained) | 2);
+        Check((bool)preferEnd.Invoke(null, new[] { additionalChallenge, retained }),
+            "an additional set Challenge takes priority over retaining Password at equal scores");
         var withoutLacrima = nextPosition.Invoke(retained, new object[] { null });
         positionType.GetField("Field").SetValue(withoutLacrima, new[] { 0, Gryphon, 0, 0, 0, 0, 0 });
         Check((int)comparePreservation.Invoke(null, new[] { retained, withoutLacrima }) > 0,
@@ -613,8 +625,65 @@ internal static class TwinsPlannerRules
         planMoves.Add(summon);
         Check(!(bool)hold.Invoke(ai.Executor, null), "the counter remains available when two draws are projected");
 
+        var drawDuel = new Duel { MainPhase = new MainPhase() };
+        var drawExecutor = new TwinsExecutor(null, drawDuel);
+        var afterDraw = Activator.CreateInstance(positionType, true);
+        const int disconnect = 25156;
+        positionType.GetField("Field").SetValue(afterDraw, new[] { blue, 0, 0, 0, 0, 0, 0 });
+        positionType.GetField("Hand").SetValue(afterDraw, new List<int> { disconnect });
+        foreach (string zone in new[] { "Deck", "Grave", "Extra" })
+            positionType.GetField(zone).SetValue(afterDraw, new List<int>());
+        positionType.GetField("Draws").SetValue(afterDraw, 1);
+        drawDuel.MainPhase.SpellSetableCards.Add(new ClientCard(disconnect, CardLocation.Hand, 0, 0));
+        var drawPlan = Activator.CreateInstance(resultType, true);
+        resultType.GetField("Moves").SetValue(drawPlan, Activator.CreateInstance(typeof(List<>).MakeGenericType(moveType)));
+        var drawPlanner = type.GetMethod("ImprovePlanAfterDraw", Private);
+        var boardPlanField = type.GetField("_boardPlan", Private);
+        boardPlanField.SetValue(drawExecutor, drawPlan);
+        var upgrade = drawPlanner.Invoke(drawExecutor, new[] { afterDraw, System.Diagnostics.Stopwatch.StartNew() });
+        Check(upgrade != null && (int)resultType.GetField("Score").GetValue(upgrade) == 14,
+            "a drawn Disconnect can add a scored interruption with an Evil Twin in play");
+        boardPlanField.SetValue(drawExecutor, upgrade);
+        Check(drawPlanner.Invoke(drawExecutor, new[] { afterDraw, System.Diagnostics.Stopwatch.StartNew() }) == null,
+            "an equal-scoring replan keeps the existing suffix");
+        var nightfallSet = Activator.CreateInstance(moveType, true);
+        moveType.GetField("Card").SetValue(nightfallSet, nightfall);
+        moveType.GetField("Traps").SetValue(nightfallSet, new[] { disconnect, 98360333 });
+        var invalidatesDraw = type.GetMethod("DrawInvalidatesDeckMove", BindingFlags.Static | BindingFlags.NonPublic);
+        Check((bool)invalidatesDraw.Invoke(null, new object[] { nightfallSet, disconnect, false })
+            && !(bool)invalidatesDraw.Invoke(null, new object[] { nightfallSet, disconnect, true }),
+            "drawing the last Disconnect updates Nightfall's set plan unless a grave copy is available");
+        positionType.GetField("Field").SetValue(afterDraw, new[] { nightfall, 0, 0, 0, 0, 0, 0 });
+        positionType.GetField("Set").SetValue(afterDraw, 1);
+        boardPlanField.SetValue(drawExecutor, drawPlan);
+        Check(drawPlanner.Invoke(drawExecutor, new[] { afterDraw, System.Diagnostics.Stopwatch.StartNew() }) == null,
+            "Nightfall's already-set Disconnect and a drawn copy share one interaction");
+        const int challenge = 98360333;
+        positionType.GetField("Hand").SetValue(afterDraw, new List<int> { challenge });
+        drawDuel.MainPhase.SpellSetableCards.Clear();
+        drawDuel.MainPhase.SpellSetableCards.Add(new ClientCard(challenge, CardLocation.Hand, 0, 0));
+        var challengeUpgrade = drawPlanner.Invoke(drawExecutor, new[] { afterDraw, System.Diagnostics.Stopwatch.StartNew() });
+        Check(challengeUpgrade != null && (int)resultType.GetField("Score").GetValue(challengeUpgrade) == 14,
+            "a drawn Challenge can be set as a tie-break without awarding another point");
+
         var sendOrder = type.GetMethod("PreferredTwinSend", BindingFlags.Static | BindingFlags.NonPublic);
         const int sweet = 82699999, treat = 81078880, newYear = 25150;
+        var beforeRedDraw = Activator.CreateInstance(positionType, true);
+        positionType.GetField("Field").SetValue(beforeRedDraw, new[] { bigRed, 0, 0, 0, blue, 0, 0 });
+        positionType.GetField("Hand").SetValue(beforeRedDraw, new List<int>());
+        positionType.GetField("Grave").SetValue(beforeRedDraw, new List<int>());
+        positionType.GetField("Extra").SetValue(beforeRedDraw, new List<int>());
+        positionType.GetField("Pending").SetValue(beforeRedDraw, 1UL << (int)Enum.Parse(effects, "RedDraw"));
+        var pendingMoves = type.GetMethod("PendingMoves", Private);
+        var netDrawPoints = type.GetMethod("NetDrawPoints", BindingFlags.Static | BindingFlags.NonPublic);
+        Func<int[], int> redDrawPoints = deck =>
+        {
+            positionType.GetField("Deck").SetValue(beforeRedDraw, deck.ToList());
+            var afterRedDraw = ((IEnumerable)pendingMoves.Invoke(executor, new[] { beforeRedDraw })).Cast<object>().Single();
+            return (int)netDrawPoints.Invoke(null, new[] { afterRedDraw });
+        };
+        Check(redDrawPoints(new[] { sweet, newYear }) == 2 && redDrawPoints(new[] { newYear }) == 4,
+            "Red's planned draw loses two tenths only while Sweet is still in the deck");
         var inDeck = new HashSet<int> { sweet, treat, newYear, frost };
         Func<int, bool, bool, bool, int> sendTarget = (sender, canSweet, canNewYear, spareNewYear) =>
             (int)sendOrder.Invoke(null, new object[] { sender, new Func<int, bool>(inDeck.Contains),
@@ -709,6 +778,118 @@ internal static class TwinsPlannerRules
             .Cast<object>().Select(state => positionType.GetField("Move").GetValue(state));
         Check(!bodies.Any(move => (ExecutorType)move.GetType().GetField("Type").GetValue(move) == ExecutorType.SpSummon),
             "drawing another Frost cannot repeat its once-per-turn hand summon");
+        CheckChallengeRevival();
+        CheckChallengeBattleDefense();
         Console.WriteLine("Twins planner rules passed");
+    }
+
+    private static void CheckChallengeRevival()
+    {
+        const int challengeId = 98360333, red = 9205573, blue = 36609518;
+        int faceUp = (int)CardPosition.FaceUpAttack;
+        var duel = new Duel { Player = 1, Turn = 2, Phase = DuelPhase.Main1 };
+        for (int player = 0; player < 2; player++)
+            duel.Fields[player].Init(0, 0, player);
+        duel.Fields[0].SetInitialDeck(new NamedCard[0]);
+        string dialogPath = Path.Combine(Path.GetDirectoryName(typeof(GameAI).Assembly.Location), "Dialogs", "default.json");
+        var ai = new GameAI(new GameClient(new WindBot.WindBotInfo { Chat = false, Dialog = dialogPath }), duel);
+        var executor = new TwinsExecutor(ai, duel);
+        ai.Executor = executor;
+        var trap = new ClientCard(challengeId, CardLocation.SpellZone, 0, (int)CardPosition.FaceDownDefence);
+        var blueInGrave = new ClientCard(blue, CardLocation.Grave, 0, faceUp);
+        var redInGrave = new ClientCard(red, CardLocation.Grave, 1, faceUp);
+        foreach (var card in new[] { redInGrave, blueInGrave })
+            typeof(ClientCard).GetProperty("ProcCompleted").SetValue(card, 8);
+        duel.Fields[0].Graveyard.Add(blueInGrave);
+        var enemy = new ClientCard(14558127, CardLocation.MonsterZone, 0, faceUp) { Controller = 1 };
+        duel.Fields[1].MonsterZone[0] = enemy;
+        Func<bool> activate = () => ai.OnSelectChain(new[] { trap }, new[] { 0 }, new[] { false }, 0) >= 0;
+        Check(!activate(), "Challenge is held when Blue alone has no effect to contribute");
+        duel.Fields[0].MonsterZone[0] = new ClientCard(red, CardLocation.MonsterZone, 0, faceUp);
+        Check(activate(), "Challenge revives Blue while Red is present and an enemy card can be destroyed");
+        var pop = new ChainInfo(blueInGrave, 0, blue * 16);
+        pop.Targets.Add(enemy);
+        duel.CurrentChainInfo.Add(pop);
+        Check(!activate(), "Challenge is held if the only target is already covered by a pending removal");
+        duel.CurrentChainInfo.Clear();
+        duel.Fields[1].MonsterZone[0] = null;
+        var normalSpell = new ClientCard(53129443, CardLocation.SpellZone, 0, faceUp) { Controller = 1 };
+        duel.Fields[1].SpellZone[0] = normalSpell;
+        duel.CurrentChainInfo.Add(new ChainInfo(normalSpell, 1, 0));
+        Check(!activate(), "Challenge does not spend Blue's pop on a spell that leaves after the chain");
+        duel.CurrentChainInfo.Clear();
+        duel.Fields[1].SpellZone[0] = null;
+        duel.Fields[0].MonsterZone[0] = new ClientCard(blue, CardLocation.MonsterZone, 0, faceUp);
+        duel.Fields[0].Graveyard.Clear();
+        duel.Fields[0].Graveyard.Add(redInGrave);
+        Check(activate(), "Challenge revives Red to draw even when the opponent has no cards on the field");
+        typeof(TwinsExecutor).GetField("_searchLocked", Private).SetValue(executor, true);
+        Check(!activate(), "Challenge is held if Droll blocks the only benefit");
+        duel.ChainTargets.Add(trap);
+        Check(activate(), "Challenge can salvage a revival when it is targeted for removal");
+
+        duel.ChainTargets.Clear();
+        duel.Phase = DuelPhase.Draw;
+        duel.Fields[0].SpellZone[0] = trap;
+        duel.Fields[0].MonsterZone[0] = new ClientCard(25154, CardLocation.MonsterZone, 0, faceUp);
+        duel.Fields[0].Graveyard.Add(blueInGrave);
+        duel.Fields[0].Graveyard.Add(new ClientCard(25150, CardLocation.Grave, 2, faceUp));
+        duel.Fields[0].SetInitialDeck(new[] { NamedCard.Get(61976639) });
+        typeof(TwinsExecutor).GetField("_searchLocked", Private).SetValue(executor, false);
+        Check(!activate(), "Challenge reserves the complete New Year cycle instead of reviving New Year for an early search");
+    }
+
+    private static void CheckChallengeBattleDefense()
+    {
+        const int challenge = 98360333, red = 36326160, blue = 73810864;
+        int faceUp = (int)CardPosition.FaceUpAttack;
+        var positions = new[] { CardPosition.FaceUpAttack, CardPosition.FaceUpDefence };
+        string dialogPath = Path.Combine(Path.GetDirectoryName(typeof(GameAI).Assembly.Location), "Dialogs", "default.json");
+        foreach (var starter in new[] { red, blue })
+        {
+            int partner = starter == red ? blue : red;
+            var duel = new Duel { Player = 1, Turn = 2, Phase = DuelPhase.BattleStep };
+            for (int player = 0; player < 2; player++)
+                duel.Fields[player].Init(0, 0, player);
+            var ai = new GameAI(new GameClient(new WindBot.WindBotInfo { Chat = false, Dialog = dialogPath }), duel);
+            var executor = new TwinsExecutor(ai, duel);
+            ai.Executor = executor;
+            var own = duel.Fields[0];
+            var trap = new ClientCard(challenge, CardLocation.SpellZone, 0, (int)CardPosition.FaceDownDefence);
+            var twin = new ClientCard(starter, CardLocation.Grave, 0, faceUp);
+            own.Graveyard.Add(twin);
+            own.SetInitialDeck(new NamedCard[0]);
+            Func<bool> activate = () => ai.OnSelectChain(new[] { trap }, new[] { 0 }, new[] { false }, 0) >= 0;
+            Check(!activate(), "Challenge preserves the trap if an empty board can only get one small blocker");
+
+            if (starter == red)
+                own.SetInitialDeck(new[] { NamedCard.Get(partner) });
+            else
+                own.Hand.Add(new ClientCard(partner, CardLocation.Hand, 0, faceUp));
+            own.MonsterZone[0] = new ClientCard(partner, CardLocation.MonsterZone, 0, faceUp);
+            Check(!activate(), "Challenge keeps the trap if the first small Twin would not be the only monster");
+            own.MonsterZone[0] = null;
+            duel.Phase = DuelPhase.Main1;
+            Check(!activate(), "Challenge does not commit the defensive pair before the opponent's Battle Phase");
+            duel.Phase = DuelPhase.BattleStep;
+            var planUsed = typeof(TwinsExecutor).GetField("_planUsed", Private);
+            var effects = typeof(TwinsExecutor).GetNestedType("PlanEffect", BindingFlags.NonPublic);
+            planUsed.SetValue(executor, 1UL << (int)Enum.Parse(effects, starter == red ? "SmallRed" : "SmallBlue"));
+            Check(!activate(), "Challenge holds if the original Twin already used its summon effect this turn");
+            planUsed.SetValue(executor, 0UL);
+            Check(activate(), "Challenge revives an original Twin that can summon a second blocker");
+
+            duel.CurrentChainInfo.Add(new ChainInfo(trap, 0, 0));
+            duel.SolvingChainIndex = 1;
+            Check(ai.OnSelectPosition(starter, positions) == CardPosition.FaceUpDefence,
+                "Challenge summons the first blocker in face-up Defense Position");
+            Check(!executor.OnSelectYesNo(challenge * 16), "Challenge preserves the blockers instead of Link Summoning");
+            twin.Location = CardLocation.MonsterZone;
+            own.MonsterZone[0] = twin;
+            executor.OnChainEnd();
+            duel.CurrentChainInfo[0] = new ChainInfo(twin, 0, starter * 16);
+            Check(ai.OnSelectPosition(partner, positions) == CardPosition.FaceUpDefence,
+                "the original Twin summons the second blocker in face-up Defense Position after Challenge resolves");
+        }
     }
 }

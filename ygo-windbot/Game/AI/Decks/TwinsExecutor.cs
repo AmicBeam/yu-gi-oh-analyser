@@ -203,6 +203,9 @@ namespace WindBot.Game.AI.Decks
             _opponentNewYearRelease = null;
             _opponentNewYearPlace = 0;
             _waitingForNewYearCycle = false;
+            _challengeRevivalTarget = null;
+            _challengeRevivalPlace = 0;
+            _challengeBattleStarter = 0;
             _opponentActivatedCards.Clear();
             _twinTrapActivated = false;
             _abaoReloadNightfall = false;
@@ -315,6 +318,11 @@ namespace WindBot.Game.AI.Decks
             _sequenceFusion = 0;
             _opponentNightfallTarget = 0;
             _opponentNightfallPlace = 0;
+            _challengeRevivalTarget = null;
+            _challengeRevivalPlace = 0;
+            if (_challengeBattleStarter != 0 && (!Bot.HasInMonstersZone(_challengeBattleStarter)
+                || Duel.CurrentChainInfo.Any(link => link.ActivatePlayer == 0 && link.IsActivateCode(_challengeBattleStarter))))
+                _challengeBattleStarter = 0;
             _blueBattleRemovalTarget = null;
             if (_abaoReviveTarget != null)
                 _returningAbao = Bot.Banished.FirstOrDefault(card => card.IsCode(Abao));
@@ -335,6 +343,8 @@ namespace WindBot.Game.AI.Decks
                 return planned.Value;
             if (desc == Util.GetStringId(Challenge, 0))
             {
+                if (_challengeBattleStarter != 0 && InBattle())
+                    return false;
                 if (PrepareChallengeDesiraeLink() || PrepareChallengeHeist())
                     return true;
                 if (Bot.HasInMonstersZone(new[] { Nightfall, Sunny, Desirae, Gryphon }))
@@ -356,6 +366,13 @@ namespace WindBot.Game.AI.Decks
 
         public override CardPosition OnSelectPosition(int cardId, IList<CardPosition> positions)
         {
+            var chain = Duel.GetCurrentSolvingChainInfo();
+            if (_challengeBattleStarter != 0 && InBattle() && positions.Contains(CardPosition.FaceUpDefence)
+                && chain?.ActivatePlayer == 0
+                && (chain.IsActivateCode(Challenge) && cardId == _challengeBattleStarter
+                    || chain.IsActivateCode(_challengeBattleStarter)
+                        && (_challengeBattleStarter == KiSikil ? IsBlueTwin(cardId) : IsRedTwin(cardId))))
+                return CardPosition.FaceUpDefence;
             if (Duel.Player == 0 && (Duel.Phase == DuelPhase.Main2 || Duel.Turn == 1 && Duel.Phase == DuelPhase.Main1)
                 && positions.Contains(CardPosition.FaceUpDefence))
             {
@@ -516,6 +533,8 @@ namespace WindBot.Game.AI.Decks
                         return Prefer(cards, min, Disconnect, Challenge);
                     if (chain.IsActivateCode(Sunny))
                         return Prefer(cards, max, EvilKiSikil, EvilLilLa, NewYear, Sweet);
+                    if (chain.IsActivateCode(Challenge) && _challengeRevivalTarget != null && cards.Contains(_challengeRevivalTarget))
+                        return new[] { _challengeRevivalTarget };
                     if (chain.IsActivateCode(Challenge) && _waitingForNewYearCycle
                         && cards.Any(card => card.IsCode(EvilLilLa)))
                         return Prefer(cards, min, EvilLilLa);

@@ -95,6 +95,8 @@ namespace WindBot.Game.AI.Decks
 
         private bool PrepareChallengeDesiraeLink()
         {
+            if (Duel.Player == 1 && !HasUncoveredChallengeRemoval())
+                return false;
             ClientCard desirae = Bot.GetMonsters().FirstOrDefault(CanTradeDesirae);
             if (desirae == null)
                 return false;

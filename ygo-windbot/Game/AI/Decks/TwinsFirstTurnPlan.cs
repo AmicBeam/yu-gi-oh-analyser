@@ -92,7 +92,7 @@ namespace WindBot.Game.AI.Decks
             public OpponentDrawEffects DrawEffects;
             public int OpponentDraws;
             public int AbaoZone = -1, Unrevivable, TroublePick, DealSend;
-            public bool Normal, Requiem, DealLinked, Trouble, Fiends, Twins, Sealing;
+            public bool Normal, Requiem, DealLinked, Trouble, Fiends, Twins, Sealing, RedDrawWithSweetInDeck;
             public int OwnSummons;
             public bool EarlyRequiem, RequiemDefenseAtNibiruWindow, PhotoAtNibiruWindow, SearchLocked;
             public bool UsesExtraZones = true, FusionNeedsLink;
@@ -146,7 +146,8 @@ namespace WindBot.Game.AI.Decks
             public bool Has(int card) => Array.IndexOf(Field, card) >= 0;
             public string SearchKey(bool ignorePlacement = false) =>
                 Key(ignorePlacement) + ":" + (OwnSummons + (EarlyRequiem ? 8 : 0) + (PhotoAtNibiruWindow ? 16 : 0))
-                    + ":" + RequiemDefenseAtNibiruWindow + ":" + PasswordBanishes + ":" + OpponentDraws + ":" + NewYearBanished;
+                    + ":" + RequiemDefenseAtNibiruWindow + ":" + PasswordBanishes + ":" + OpponentDraws
+                    + ":" + NewYearBanished + ":" + RedDrawWithSweetInDeck;
             public bool CanRevive(int id) => (Unrevivable & ExtraFlag(id)) == 0;
             public bool Fresh(PlanEffect effect) => (Used & Flag(effect)) == 0;
             public void Use(PlanEffect effect)
@@ -583,6 +584,7 @@ namespace WindBot.Game.AI.Decks
             if (!p.SearchLocked && (p.Pending & Flag(PlanEffect.RedDraw)) != 0 && p.Fresh(PlanEffect.RedDraw))
             {
                 var next = UseEffect(p, PlanEffect.RedDraw, Effect(EvilKiSikil, 0, trigger: true));
+                next.RedDrawWithSweetInDeck = p.Deck.Contains(Sweet);
                 next.Hand.Add(0);
                 next.Draws++;
                 yield return next;

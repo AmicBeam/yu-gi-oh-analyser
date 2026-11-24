@@ -13,7 +13,7 @@ namespace WindBot.Game.AI.Decks
         private long _referenceSearchMs;
         private ClientCard _planReturningNewYear;
         private bool _planStopped, _planInterrupted, _planDealLinked, _planFiends, _planTwins;
-        private bool _planOtherInterference, _planInventoryChanged;
+        private bool _planOtherInterference, _planInventoryChanged, _planDrawPending;
         private const int MoonSqueeze = 47605577;
         private bool _moonDrawPressure, _settleDrawPressure, _finishWithBackrow;
         private ChainInfo _moonDrawOnly;
@@ -151,14 +151,19 @@ namespace WindBot.Game.AI.Decks
                 _moonDrawOnly = chain;
             if (player == 0 && InBoardBuildPhase && _boardPlan != null)
             {
+                _planDrawPending = true;
                 int drawn = PlanCode(Bot.Hand.LastOrDefault());
                 if (drawn != 0 && !Bot.HasInDeck(drawn) && _boardPlan.Moves.Skip(_planStep).Any(move =>
-                    move.Target == drawn && (move.Card == Deal || move.Card == Scout || IsTwinSearch(move)
-                        || move.TargetLocation == CardLocation.Deck)))
+                    DrawInvalidatesDeckMove(move, drawn, Bot.HasInGraveyard(drawn))))
                     _planInventoryChanged = true;
             }
             base.OnDraw(player);
         }
+
+        private static bool DrawInvalidatesDeckMove(PlanMove move, int drawn, bool inGrave) =>
+            move.Target == drawn && (move.Card == Deal || move.Card == Scout || IsTwinSearch(move)
+                || move.TargetLocation == CardLocation.Deck)
+            || !inGrave && move.Card == Nightfall && move.Traps?.Contains(drawn) == true;
 
         public override void OnChainSolved(int chainIndex)
         {
@@ -278,40 +283,48 @@ namespace WindBot.Game.AI.Decks
                 _planPlacement = null;
                 _planPayment = null;
                 _planMaterialCards = null;
-                if (_planInterrupted || _planInventoryChanged || _boardPlan == null || NextPlanMove != null && !PlanOffered(NextPlanMove))
+                bool needsPlan = _planInterrupted || _planInventoryChanged || _boardPlan == null
+                    || NextPlanMove != null && !PlanOffered(NextPlanMove);
+                if (needsPlan || _planDrawPending)
                 {
+                    _planDrawPending = false;
                     if (_planInterrupted)
                         TracePlanner("recovery", "opponent-chain");
                     else if (_planInventoryChanged)
                         TracePlanner("inventory-replan", string.Empty);
-                    else if (_boardPlan != null)
+                    else if (needsPlan && _boardPlan != null)
                         TracePlanner(FollowsBoardPriorities(NextPlanMove) ? "resync" : "policy-replan", NextPlanMove.ToString());
                     bool recovering = _planInterrupted;
                     _planInterrupted = _planInventoryChanged = false;
 
                     var timer = Stopwatch.StartNew();
                     var position = LivePlanPosition();
-                    _boardPlan = ChooseBoardPlan(position, timer, recovering);
-                    _planOwnerTurn = Duel.Turn;
-                    TracePlanner("window", Duel.Turn + " " + Duel.Phase + " "
-                        + (position.Normal ? 1 : 0) + " " + position.Used);
-                    TracePlanner("search-ms", timer.ElapsedMilliseconds.ToString());
-                    _planStep = 0;
-                    _planReturnZone = _boardPlan.ReturnZone;
-                    TracePlanner("plan", string.Join(" ", _boardPlan.Score, _boardPlan.States,
-                        _boardPlan.Cutoffs, string.Join(" ", _boardPlan.Moves)));
-                    if (position.DrawEffects.Active && _boardPlan.Score <= 0)
+                    var plan = needsPlan ? ChooseBoardPlan(position, timer, recovering)
+                        : ImprovePlanAfterDraw(position, timer);
+                    if (plan != null)
                     {
-                        _settleDrawPressure = true;
-                        TracePlanner("draw-pressure-stop", _boardPlan.Score.ToString());
-                        return false;
-                    }
-                    if (_boardPlan.Moves.Count == 0 && !_normalSummoned && Bot.GetMonsters().Count == 0
-                        && position.Hand.Any(id => IsTwin(id) || id == Trouble || id == Password))
-                    {
-                        _boardPlan = null;
-                        _planStopped = true;
-                        return false;
+                        _boardPlan = plan;
+                        _planOwnerTurn = Duel.Turn;
+                        TracePlanner("window", Duel.Turn + " " + Duel.Phase + " "
+                            + (position.Normal ? 1 : 0) + " " + position.Used);
+                        TracePlanner("search-ms", timer.ElapsedMilliseconds.ToString());
+                        _planStep = 0;
+                        _planReturnZone = _boardPlan.ReturnZone;
+                        TracePlanner("plan", string.Join(" ", _boardPlan.Score, _boardPlan.States,
+                            _boardPlan.Cutoffs, string.Join(" ", _boardPlan.Moves)));
+                        if (position.DrawEffects.Active && _boardPlan.Score <= 0)
+                        {
+                            _settleDrawPressure = true;
+                            TracePlanner("draw-pressure-stop", _boardPlan.Score.ToString());
+                            return false;
+                        }
+                        if (_boardPlan.Moves.Count == 0 && !_normalSummoned && Bot.GetMonsters().Count == 0
+                            && position.Hand.Any(id => IsTwin(id) || id == Trouble || id == Password))
+                        {
+                            _boardPlan = null;
+                            _planStopped = true;
+                            return false;
+                        }
                     }
                 }
             }
@@ -335,6 +348,46 @@ namespace WindBot.Game.AI.Decks
                 return false;
             }
             return true;
+        }
+
+        private PlanResult ImprovePlanAfterDraw(PlanPosition position, Stopwatch timer)
+        {
+            var remaining = _boardPlan.Moves.Skip(_planStep).ToList();
+            int current = EndBoardScore(position, true);
+            int floor = current;
+            PlanPosition retained = position;
+            if (remaining.Count != 0)
+            {
+                var first = ComboSuccessors(position, BoardSearchPolicy.Tactical)
+                    .Where(next => PlanOffered(next.Move) && MatchesCachedMove(next.Move, remaining[0])).ToList();
+                var replay = ReplayCachedOpening(first, remaining, timer, 100, requirePlacement: true,
+                    policy: BoardSearchPolicy.Tactical);
+                if (replay.Count == 0 && position.DrawEffects.Active)
+                {
+                    TracePlanner("draw-replan", "keep unavailable-suffix");
+                    return null;
+                }
+                retained = null;
+                foreach (var terminal in replay)
+                {
+                    terminal.Score = EndBoardScore(terminal, true);
+                    if (retained == null || terminal.Score > retained.Score
+                        || terminal.Score == retained.Score && PreferEnd(terminal, retained))
+                        retained = terminal;
+                }
+                floor = Math.Max(current, retained?.Score ?? _boardPlan.Score);
+            }
+
+            var tactical = TryTacticalContinuation(position, timer, 230);
+            var candidate = FindBoard(position, PlanOffered, 96, 10000, timer, 550, BoardSearchPolicy.HoldBackrow);
+            if (tactical != null && BetterBoardPlan(tactical, candidate))
+                candidate = tactical;
+            bool improved = candidate.Score > floor || candidate.Score == floor && retained != null
+                && (candidate.Terminal.Set & SetChallenge) > (retained.Set & SetChallenge)
+                && PreferEnd(candidate.Terminal, retained);
+            TracePlanner("draw-replan", string.Join(" ", floor, candidate.Score,
+                improved ? "upgrade" : "keep", timer.ElapsedMilliseconds));
+            return improved ? candidate : null;
         }
 
         private bool CanSetRemainingTwinTrap(ClientCard card) => card.IsCode(Challenge, Disconnect)
@@ -625,7 +678,10 @@ namespace WindBot.Game.AI.Decks
             bool usesPhoto = !UsedPhoto(position) && known.Moves.Any(UsesPhoto);
             bool sendsTwin = known.Moves.Any(move => move.Type == ExecutorType.Activate
                 && (move.Card == Deal || move.Card == Scout));
-            if ((!usesSearch && !downgrades && !usesPhoto && !sendsTwin) || timer.ElapsedMilliseconds >= 400)
+            bool canImproveRequiemTiming = !position.EarlyRequiem && position.OwnSummons < NibiruThreshold
+                && position.Extra.Contains(Requiem) && known.Terminal?.EarlyRequiem != true;
+            if ((!usesSearch && !downgrades && !usesPhoto && !sendsTwin && !canImproveRequiemTiming)
+                || timer.ElapsedMilliseconds >= 400)
                 return null;
             var policy = usesSearch || downgrades || sendsTwin ? BoardSearchPolicy.HoldBackrow : BoardSearchPolicy.PreservePhoto;
             var alternative = FindBoard(position, PlanOffered, 96, 12000, timer, known.Terminal == null ? 330 : 400, policy);
@@ -1118,6 +1174,7 @@ namespace WindBot.Game.AI.Decks
             _referenceSearchMs = 0;
             _planReturnZone = -1;
             _planStopped = _planInterrupted = _planDealLinked = _planTwins = _planFiends = _planOtherInterference = _planInventoryChanged = false;
+            _planDrawPending = false;
             _planUsed = 0;
             _moonDrawPressure = _settleDrawPressure = _finishWithBackrow = false;
             _moonDrawOnly = null;

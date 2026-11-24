@@ -50,7 +50,8 @@ namespace WindBot.Game.AI.Decks
         }
 
         private List<PlanPosition> ReplayCachedOpening(List<PlanPosition> firstMoves, IList<PlanMove> moves,
-            Stopwatch timer, int deadline, bool requirePlacement = false)
+            Stopwatch timer, int deadline, bool requirePlacement = false,
+            BoardSearchPolicy policy = BoardSearchPolicy.Reference)
         {
             var states = firstMoves;
             for (int index = 0; index < moves.Count; index++)
@@ -58,7 +59,7 @@ namespace WindBot.Game.AI.Decks
                 if (timer.ElapsedMilliseconds >= deadline)
                     return new List<PlanPosition>();
                 var move = moves[index];
-                var successors = index == 0 ? states : states.SelectMany(position => ComboSuccessors(position));
+                var successors = index == 0 ? states : states.SelectMany(position => ComboSuccessors(position, policy));
                 states = successors.Where(next => MatchesCachedMove(next.Move, move))
                     .Where(next => !requirePlacement || next.Move.Places == move.Places
                         && SameComboCards(next.Move.Materials, move.Materials)
@@ -192,6 +193,26 @@ namespace WindBot.Game.AI.Decks
                     && p.Fresh(PlanEffect.BlueRevive) && p.Fresh(PlanEffect.RedDraw),
                 SummonTactic(Scout, LilLa), SummonTactic(EvilLilLa, Frost, Scout),
                 ActivateTactic(EvilLilLa, 1, EvilKiSikil), ActivateTactic(EvilKiSikil, 0)),
+            new BoardTactic(p => p.Has(EvilKiSikil) && p.Has(EvilLilLa) && p.Trouble && p.Grave.Contains(Yama)
+                    && p.Grave.Contains(Engraver) && p.Hand.Contains(Treat)
+                    && p.Fresh(PlanEffect.BluePop) && p.Fresh(PlanEffect.Yama) && p.Fresh(PlanEffect.Sunny)
+                    && p.Fresh(PlanEffect.RedDraw) && p.Fresh(PlanEffect.Fusion) && p.Fresh(PlanEffect.Nightfall)
+                    && p.Fresh(PlanEffect.Engraver) && p.Extra.Contains(Caesar),
+                ActivateTactic(EvilLilLa, 0, Trouble),
+                (p, move) => move.Type == ExecutorType.Activate && move.Card == Yama
+                    && move.Effect == 1 && LightFiend(move.Target),
+                SummonWithExactMaterials(Sunny, EvilKiSikil, EvilLilLa), SplitTacticalPair,
+                ActivateTactic(EvilKiSikil, 0), SummonTactic(Treat),
+                (p, move) => move.Type == ExecutorType.SpSummon && move.Card == Sequence
+                    && move.MaterialIds.Contains(Treat)
+                    && move.MaterialIds.Any(id => id != EvilKiSikil && LightFiend(id)),
+                SummonWithExactMaterials(Nightfall, EvilKiSikil, EvilLilLa), ActivateTactic(Nightfall, 0),
+                (p, move) => move.Type == ExecutorType.Activate && move.Card == Sequence
+                    && move.Fusion == LacrimaFusion && !move.Selection.Contains(Engraver)
+                    && !move.Selection.Contains(EvilKiSikil),
+                ActivateTactic(LacrimaFusion, 0, EvilKiSikil),
+                SummonWithExactMaterials(Gryphon, Sequence, EvilKiSikil),
+                ActivateTactic(Engraver, 2, Sequence), SummonWithExactMaterials(Caesar, Engraver, LacrimaFusion)),
             new BoardTactic(p => p.Has(EvilKiSikil) && p.Has(EvilLilLa) && p.Trouble && p.Grave.Contains(Yama)
                     && p.Fresh(PlanEffect.BluePop) && p.Fresh(PlanEffect.Yama) && p.Fresh(PlanEffect.Sunny)
                     && p.Extra.Contains(Gryphon) && (p.Set & (SetChallenge | SetDisconnect)) == (SetChallenge | SetDisconnect),
@@ -368,6 +389,15 @@ namespace WindBot.Game.AI.Decks
                     && p.Fresh(PlanEffect.BluePop) && p.Fresh(PlanEffect.Yama),
                 SummonTactic(EvilKiSikil, Frost, LilLa), ActivateTactic(EvilKiSikil, 1, EvilLilLa),
                 ActivateTactic(EvilLilLa, 0, Trouble), ActivateTactic(Yama, 1, Engraver)),
+            new BoardTactic(p => p.Has(LilLa) && p.Has(Frost) && p.Trouble && p.Hand.Contains(Treat)
+                    && p.Grave.Contains(Yama) && p.Grave.Contains(Engraver)
+                    && p.Grave.Contains(EvilLilLa) && p.CanRevive(EvilLilLa)
+                    && p.Extra.Contains(Scout) && p.Deck.Contains(NewYear) && p.Fresh(PlanEffect.Scout)
+                    && p.Fresh(PlanEffect.NewYearJump) && p.Fresh(PlanEffect.Engraver)
+                    && p.Fresh(PlanEffect.RedRevive) && p.Fresh(PlanEffect.BluePop) && p.Fresh(PlanEffect.Yama),
+                SummonWithExactMaterials(Scout, LilLa), ActivateTactic(Scout, 0, NewYear),
+                ActivateTactic(NewYear, 0, Scout), SummonWithExactMaterials(EvilKiSikil, NewYear, Frost),
+                ActivateTactic(EvilKiSikil, 1, EvilLilLa)),
             new BoardTactic(p => p.Has(LilLa) && p.Has(Frost) && p.Trouble
                     && !p.Hand.Contains(NightPhoto) && p.Grave.Contains(Engraver) && p.Grave.Contains(Deal)
                     && p.Grave.Contains(Yama) && p.Grave.Contains(EvilLilLa) && p.CanRevive(EvilLilLa)
@@ -721,9 +751,14 @@ namespace WindBot.Game.AI.Decks
             if (table.Count == 0 || !table.TryGetValue(TableKey(position, recovering), out TablePlan entry)
                 || !PlanOffered(entry.Moves[0]))
                 return false;
-            // Stored scores may predate the current Abao discard-cost rule.
+            // Recompute slot-sensitive Abao scores and any draw whose Sweet risk can change along the line.
+            bool canDrawSweet = entry.Moves.Any(move => move.Type == ExecutorType.Activate
+                    && move.Card == EvilKiSikil && move.Effect == 0)
+                && (position.Deck.Contains(Sweet) || entry.Moves.Any(move => move.Type == ExecutorType.Activate
+                    && move.Card == NightPhoto && move.Effect == 0 && move.Target == Sweet));
             if (position.Has(Abao) || position.ReturningAbao != 0
-                || entry.Moves.Any(move => move.Card == Abao || move.Target == Abao || move.SummonedIds?.Contains(Abao) == true))
+                || entry.Moves.Any(move => move.Card == Abao || move.Target == Abao || move.SummonedIds?.Contains(Abao) == true)
+                || canDrawSweet)
             {
                 int deadline = (int)Math.Min(timer.ElapsedMilliseconds + 100, 500);
                 if (timer.ElapsedMilliseconds >= deadline)
@@ -875,7 +910,9 @@ namespace WindBot.Game.AI.Decks
                 return;
             var encoded = new TablePlan
             {
-                Version = TableVersion, Key = TableKey(position, recovering), Score = plan.Score, ReturnZone = plan.ReturnZone,
+                Version = TableVersion, Key = TableKey(position, recovering),
+                Score = plan.Score + (plan.Terminal.RedDrawWithSweetInDeck ? SweetDrawPenalty : 0),
+                ReturnZone = plan.ReturnZone,
                 EarlyRequiem = HasRequiemDefense(plan.Terminal),
                 PhotoDefense = HasPhotoDefense(plan.Terminal),
                 Moves = plan.Moves.Select(move =>
