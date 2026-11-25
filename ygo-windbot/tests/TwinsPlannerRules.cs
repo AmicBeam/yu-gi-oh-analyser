@@ -843,6 +843,7 @@ internal static class TwinsPlannerRules
         CheckChallengeBattleDefense();
         CheckChallengeWaitsForHeistTarget();
         CheckPlanSetsRemainingHandTraps();
+        CheckSunnyGraveRemoval();
         CheckLethalReposition();
         Console.WriteLine("Twins planner rules passed");
     }
@@ -1081,6 +1082,73 @@ internal static class TwinsPlannerRules
                 own.SpellZone[step] = set;
             }
         }
+    }
+
+    private static void CheckSunnyGraveRemoval()
+    {
+        const int sunny = 93672138, scout = 25152, photo = 25151, pair = 62098216;
+        int faceUp = (int)CardPosition.FaceUpAttack;
+        var main = new MainPhase { CanBattlePhase = true, CanEndPhase = true };
+        var duel = new Duel { Player = 0, Turn = 2, Phase = DuelPhase.Main1, MainPhase = main };
+        for (int player = 0; player < 2; player++)
+            duel.Fields[player].Init(0, 0, player);
+        var own = duel.Fields[0];
+        var enemy = duel.Fields[1];
+        own.SetInitialDeck(new[] { NamedCard.Get(pair) });
+        own.LifePoints = 8000;
+        enemy.LifePoints = 1500;
+        string dialogPath = Path.Combine(Path.GetDirectoryName(typeof(GameAI).Assembly.Location), "Dialogs", "default.json");
+        var ai = new GameAI(new GameClient(new WindBot.WindBotInfo { Chat = false, Dialog = dialogPath }), duel);
+        var executor = new TwinsExecutor(ai, duel);
+        ai.Executor = executor;
+
+        var sunnyInGrave = new ClientCard(sunny, CardLocation.Grave, 0, faceUp);
+        var ownScout = new ClientCard(scout, CardLocation.MonsterZone, 0, faceUp);
+        var ownPhoto = new ClientCard(photo, CardLocation.MonsterZone, 1, faceUp);
+        var attacker = new ClientCard(60764609, CardLocation.MonsterZone, 2, faceUp);
+        var blocker = new ClientCard(89631139, CardLocation.MonsterZone, 0, faceUp) { Controller = 1 };
+        var backrow = new ClientCard(14558128, CardLocation.SpellZone, 0, (int)CardPosition.FaceDownDefence) { Controller = 1 };
+        foreach (var card in new[] { ownScout, ownPhoto, attacker, blocker })
+            typeof(ClientCard).GetProperty("Attack").SetValue(card, card.Data.Attack);
+        own.Graveyard.Add(sunnyInGrave);
+        own.MonsterZone[0] = ownScout;
+        own.MonsterZone[1] = ownPhoto;
+        own.MonsterZone[2] = attacker;
+        enemy.MonsterZone[0] = blocker;
+        enemy.SpellZone[0] = backrow;
+        main.ActivableCards.Add(sunnyInGrave);
+        main.ActivableDescs.Add(sunny * 16 + 1);
+        sunnyInGrave.ActionActivateIndex[sunny * 16 + 1] = 0;
+        Check(ai.OnSelectIdleCmd(main).Action == MainPhaseAction.MainAction.Activate,
+            "Sunny is considered early enough to clear a blocker and unlock lethal");
+
+        var deckCost = new ClientCard(pair, CardLocation.Deck, 0, 0);
+        var link = new ChainInfo(sunnyInGrave, 0, sunny * 16 + 1);
+        duel.CurrentChain.Add(sunnyInGrave);
+        duel.CurrentChainInfo.Add(link);
+        Check(ReferenceEquals(executor.OnSelectCard(new[] { ownScout, deckCost }, 1, 1, HintMsg.ToGrave, false)?.SingleOrDefault(), deckCost),
+            "Sunny pays a planned legal deck cost without spending a field monster");
+        duel.SolvingChainIndex = 1;
+        Check(ReferenceEquals(executor.OnSelectCard(new[] { ownPhoto, backrow, blocker }, 1, 1, HintMsg.ToGrave, false)?.SingleOrDefault(), blocker),
+            "Sunny sends the planned opposing blocker instead of reusing cost preferences at resolution");
+        Check(ReferenceEquals(executor.OnSelectCard(new[] { ownPhoto, backrow }, 1, 1, HintMsg.ToGrave, false)?.SingleOrDefault(), backrow),
+            "Sunny still removes another opposing card when the planned target leaves before resolution");
+
+        duel.CurrentChain.Clear();
+        duel.CurrentChainInfo.Clear();
+        duel.SolvingChainIndex = 0;
+        enemy.MonsterZone[0] = null;
+        Check(ai.OnSelectIdleCmd(main).Action == MainPhaseAction.MainAction.ToBattlePhase,
+            "Sunny is kept when the current attackers already have lethal");
+        main.CanBattlePhase = false;
+        duel.Phase = DuelPhase.Main2;
+        Check(ai.OnSelectIdleCmd(main).Action == MainPhaseAction.MainAction.Activate,
+            "Sunny can still be used for removal in Main 2");
+
+        own.SetInitialDeck(new[] { NamedCard.Get(25156) });
+        own.MonsterZone[0] = new ClientCard(25154, CardLocation.MonsterZone, 0, faceUp);
+        Check(ai.OnSelectIdleCmd(main).Action == MainPhaseAction.MainAction.ToEndPhase,
+            "Sunny keeps Nightfall when spending it would trade away a live interruption");
     }
 
     private static void CheckLethalReposition()

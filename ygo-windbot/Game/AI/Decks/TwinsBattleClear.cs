@@ -9,9 +9,13 @@ namespace WindBot.Game.AI.Decks
         private const int EngraverRemoval = 1;
         private const int TwinRemoval = 2;
         private const int AbaoRemoval = 4;
+        private const int SunnyRemoval = 8;
+        private const int EvilTwinPair = 62098216;
 
         private ClientCard _abaoRemovalTarget;
         private ClientCard _blueBattleRemovalTarget;
+        private ClientCard _sunnyRemovalCost;
+        private ClientCard _sunnyRemovalTarget;
         private readonly HashSet<int> _battleClearEffectsUsed = new HashSet<int>();
 
         private sealed class BattleClear
@@ -25,6 +29,7 @@ namespace WindBot.Game.AI.Decks
             public ClientCard RevivedCard;
             public IList<ClientCard> Materials;
             public ClientCard Discard;
+            public ClientCard SendCost;
             public int Steps;
             public int RevivalZone;
         }
@@ -42,7 +47,7 @@ namespace WindBot.Game.AI.Decks
         {
             foreach (ChainInfo link in Duel.CurrentChainInfo.Where(link => link.ActivatePlayer == 0))
             {
-                foreach (int code in new[] { KiSikil, LilLa, EvilKiSikil, EvilLilLa, Requiem, Engraver, Abao })
+                foreach (int code in new[] { KiSikil, LilLa, EvilKiSikil, EvilLilLa, Requiem, Engraver, Abao, Sunny })
                 {
                     if (!link.IsActivateCode(code))
                         continue;
@@ -77,19 +82,23 @@ namespace WindBot.Game.AI.Decks
 
         private bool TryStartBattleClear()
         {
-            if (!OwnMainBeforeBattle() || Card.IsDisabled())
+            bool sunny = Card.IsCode(Sunny) && Card.Location == CardLocation.Grave;
+            bool ownMain = Duel.Player == 0 && (Duel.Phase == DuelPhase.Main1 || Duel.Phase == DuelPhase.Main2);
+            if ((!OwnMainBeforeBattle() && !(sunny && ownMain)) || Card.IsDisabled())
                 return false;
 
             var current = CurrentBattlePosition();
-            if (current.Defenders.Count + current.Backrow.Count == 0 || CanFinishBattle(current))
+            if (current.Defenders.Count + current.Backrow.Count == 0
+                || OwnMainBeforeBattle() && Duel.MainPhase?.CanBattlePhase == true && CanFinishBattle(current))
                 return false;
             var lines = BattleClears(current).Where(OfferedInMainPhase).ToList();
+            long holdScore = lines.Any(clear => clear.SendCost != null) ? BattleClearScore(current, 0) : long.MinValue;
             BattleClear best = null;
             long bestScore = long.MinValue;
             foreach (BattleClear clear in lines)
             {
                 long score = EvaluateBattleClear(current, clear, 0, 0);
-                if (score > bestScore)
+                if (score > bestScore && (clear.SendCost == null || score > holdScore))
                 {
                     best = clear;
                     bestScore = score;
@@ -108,6 +117,12 @@ namespace WindBot.Game.AI.Decks
             }
             if (Type != ExecutorType.Activate || !MatchesBattleClear(best, ActivateDescription))
                 return false;
+            if (best.SendCost != null)
+            {
+                _sunnyRemovalCost = best.SendCost;
+                _sunnyRemovalTarget = best.Target;
+                return true;
+            }
             if (best.Source.IsCode(Abao))
             {
                 _abaoReviveTarget = null;
@@ -152,6 +167,7 @@ namespace WindBot.Game.AI.Decks
 
         private static int RemovalEngineMask(ClientCard card)
         {
+            if (card.IsCode(Sunny)) return SunnyRemoval;
             return card.IsCode(Abao) ? AbaoRemoval : card.IsCode(EvilKiSikil) ? TwinRemoval : EngraverRemoval;
         }
 
@@ -162,6 +178,11 @@ namespace WindBot.Game.AI.Decks
             if ((used & AbaoRemoval) == 0)
             {
                 foreach (BattleClear clear in AbaoBattleClears(position))
+                    yield return clear;
+            }
+            if ((used & SunnyRemoval) == 0)
+            {
+                foreach (BattleClear clear in SunnyBattleClears(position))
                     yield return clear;
             }
 
@@ -236,6 +257,52 @@ namespace WindBot.Game.AI.Decks
             }
         }
 
+        private static bool IsSunnyRemovalCost(ClientCard card) =>
+            card.Data?.HasType(CardType.Monster) == true && card.HasSetcode(EvilTwinSet);
+
+        private IEnumerable<BattleClear> SunnyBattleClears(BattlePosition position)
+        {
+            var sunny = position.Grave.FirstOrDefault(card => card.IsCode(Sunny));
+            if (sunny == null || !BattleClearUnused(Sunny, 1))
+                yield break;
+
+            var costs = Bot.Hand.Where(card => IsSunnyRemovalCost(card) && !position.Grave.Contains(card))
+                .GroupBy(PlanCode).Select(group => group.First())
+                .Concat(position.Field.Where(card => card.IsFaceup() && IsSunnyRemovalCost(card)));
+            if (Bot.HasInDeck(EvilTwinPair))
+                costs = new[] { new ClientCard(EvilTwinPair, CardLocation.Deck, 0) }.Concat(costs);
+
+            var targets = RankSunnyRemovalTargets(position.Defenders.Concat(position.Backrow)).ToList();
+            foreach (var cost in costs)
+            foreach (var target in targets)
+                yield return new BattleClear { Source = sunny, Description = Util.GetStringId(Sunny, 1),
+                    SendCost = cost, Target = target, Steps = 1 };
+        }
+
+        private static IOrderedEnumerable<ClientCard> RankSunnyRemovalTargets(IEnumerable<ClientCard> cards) =>
+            cards.OrderByDescending(card => card.Controller == 1)
+                .ThenByDescending(card => card.Controller == 1 && card.IsFaceup() && !card.IsDisabled() && card.IsFloodgate())
+                .ThenByDescending(card => card.Controller == 1 && card.IsFaceup() && !card.IsDisabled() && card.IsMonsterDangerous())
+                .ThenBy(card => card.Controller == 0 && card.IsCode(Abao, Nightfall, Sunny, Gryphon, Desirae, Caesar))
+                .ThenByDescending(card => card.Controller == 1 ? card.Attack : -card.Attack);
+
+        private IList<ClientCard> SelectSunnyRemovalCards(IList<ClientCard> cards, int min, bool resolving)
+        {
+            if (resolving)
+            {
+                if (min == 1 && cards.Contains(_sunnyRemovalTarget))
+                    return new[] { _sunnyRemovalTarget };
+                return RankSunnyRemovalTargets(cards).Take(min).ToList();
+            }
+            var cost = _sunnyRemovalCost;
+            var planned = cards.FirstOrDefault(card => card == cost)
+                ?? cards.FirstOrDefault(card => cost != null && card.Location == cost.Location && PlanCode(card) == PlanCode(cost));
+            if (min == 1 && planned != null)
+                return new[] { planned };
+            return cards.OrderBy(card => card.Location != CardLocation.Deck)
+                .ThenBy(card => card.Location != CardLocation.Hand).ThenBy(card => card.Attack).Take(min).ToList();
+        }
+
         private IEnumerable<BattleClear> AbaoBattleClears(BattlePosition position)
         {
             if (!BattleClearUnused(Abao, 0))
@@ -287,6 +354,17 @@ namespace WindBot.Game.AI.Decks
             var field = before.Field.ToList();
             var grave = before.Grave.Where(card => card != clear.ReturnedCard && card != clear.RevivedCard).ToList();
             var lostEquips = before.LostEquips.ToList();
+            if (clear.SendCost != null)
+            {
+                grave.Remove(clear.Source);
+                field.Remove(clear.SendCost);
+                grave.Add(clear.SendCost);
+                foreach (var equip in clear.SendCost.EquipCards.Where(card => card.Controller == 0 && !lostEquips.Contains(card)))
+                {
+                    lostEquips.Add(equip);
+                    grave.Add(equip);
+                }
+            }
             if (clear.Discard != null)
                 grave.Add(clear.Discard);
             if (clear.Materials != null)
@@ -470,8 +548,9 @@ namespace WindBot.Game.AI.Decks
                 nightfallInteractions = System.Math.Max(nightfallInteractions, count + (readyTwins ? 1 : 0));
             }
             interactions += nightfallInteractions;
-            int damage = ProjectedBattleDamage(position);
-            if (damage < Enemy.LifePoints && Duel.MainPhase?.CanBattlePhase == true)
+            bool canBattle = OwnMainBeforeBattle() && Duel.MainPhase?.CanBattlePhase == true;
+            int damage = canBattle ? ProjectedBattleDamage(position) : 0;
+            if (damage < Enemy.LifePoints && canBattle)
             {
                 var offered = OfferedAttackPositionChanges(position);
                 if (offered.Count != 0)

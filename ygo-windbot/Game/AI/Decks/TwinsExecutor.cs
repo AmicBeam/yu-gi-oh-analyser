@@ -97,6 +97,7 @@ namespace WindBot.Game.AI.Decks
             AddExecutor(ExecutorType.Activate, EvilKiSikil, TryStartBattleClear);
             AddExecutor(ExecutorType.Activate, Requiem, TryStartBattleClear);
             AddExecutor(ExecutorType.Activate, Engraver, TryStartBattleClear);
+            AddExecutor(ExecutorType.Activate, Sunny, () => Card.Location == CardLocation.Grave && TryStartBattleClear());
             AddExecutor(ExecutorType.GoToBattlePhase, EnterBattleForCurrentBoard);
             AddExecutor(ExecutorType.GoToBattlePhase, EnterBattleForNightfall);
             AddExecutor(ExecutorType.SpSummon, Nightfall, PrepareNightfallRotation);
@@ -199,6 +200,8 @@ namespace WindBot.Game.AI.Decks
             _requiemSummoned = false;
             _lacrimaBurnUsed = false;
             _blueBattleRemovalTarget = null;
+            _sunnyRemovalCost = null;
+            _sunnyRemovalTarget = null;
             _abaoRemovalTarget = null;
             _abaoReviveTarget = null;
             _abaoRevivalPlace = 0;
@@ -328,6 +331,8 @@ namespace WindBot.Game.AI.Decks
                 || Duel.CurrentChainInfo.Any(link => link.ActivatePlayer == 0 && link.IsActivateCode(_challengeBattleStarter))))
                 _challengeBattleStarter = 0;
             _blueBattleRemovalTarget = null;
+            _sunnyRemovalCost = null;
+            _sunnyRemovalTarget = null;
             if (_abaoReviveTarget != null)
                 _returningAbao = Bot.Banished.FirstOrDefault(card => card.IsCode(Abao));
             _abaoRemovalTarget = null;
@@ -605,8 +610,8 @@ namespace WindBot.Game.AI.Decks
                         return Prefer(cards, min, KiSikil, Deal, Frost, NewYear);
                     if (chain.IsActivateCode(Lacrima))
                         return Prefer(cards, min, Engraver, Tract);
-                    if (chain.IsActivateCode(Sunny))
-                        return Prefer(cards, min, NightPhoto, Sweet, Treat, KiSikil);
+                    if (chain.IsActivateCode(Sunny) && chain.ActivateDescription % 16 == 1)
+                        return SelectSunnyRemovalCards(cards, min, Duel.GetCurrentSolvingChainInfo() == chain);
                 }
 
                 if (hint == HintMsg.Release && chain.IsActivateCode(NewYear))
@@ -838,8 +843,8 @@ namespace WindBot.Game.AI.Decks
 
         private bool SunnyActivate()
         {
-            if (Card.Location == CardLocation.Grave)
-                return Duel.Player == 0 && Enemy.GetMonsters().Count + Enemy.GetSpellCount() > 0;
+            if (Card.Location != CardLocation.MonsterZone)
+                return false;
             if (Duel.Player == 0)
                 return OwnSunnyActivate();
             return Duel.Player == 1 && (Duel.ChainTargets.Contains(Card)
