@@ -169,7 +169,7 @@ namespace WindBot.Game.AI.Decks
             AddExecutor(ExecutorType.SpellSet, Disconnect, CanSetForEndBoard);
             AddExecutor(ExecutorType.SpellSet, Challenge, CanSetForEndBoard);
             AddExecutor(ExecutorType.SpellSet, Crossout, CanSetForEndBoard);
-            AddExecutor(ExecutorType.SpellSet, _CardId.InfiniteImpermanence, () => CanSetForEndBoard() && Bot.GetMonsters().Count > 0);
+            AddExecutor(ExecutorType.SpellSet, _CardId.InfiniteImpermanence, () => CanSetRemainingBackrow(Card));
             AddExecutor(ExecutorType.Repos, DefaultMonsterRepos);
         }
 
@@ -349,7 +349,8 @@ namespace WindBot.Game.AI.Decks
                     return false;
                 if (PrepareChallengeDesiraeLink() || PrepareChallengeHeist())
                     return true;
-                if (Bot.HasInMonstersZone(new[] { Nightfall, Sunny, Desirae, Gryphon }))
+                if (Duel.Player == 1 && !HasFreshHeistTarget()
+                    || Bot.HasInMonstersZone(new[] { Nightfall, Sunny, Desirae, Gryphon }))
                     return false;
             }
             if (_abaoReloadNightfall && desc == Util.GetStringId(Nightfall, 2))

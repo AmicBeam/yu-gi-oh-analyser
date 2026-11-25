@@ -97,11 +97,14 @@ namespace WindBot.Game.AI.Decks
                 if (!threatened)
                     return false;
             }
+            var targets = Bot.Graveyard.Where(card => card.IsCanRevive()
+                && (card.HasSetcode(KiSikilSet) || card.HasSetcode(LilLaSet))).ToList();
             var blue = Bot.GetMonsters().FirstOrDefault(card => card.IsCode(EvilLilLa) && card.IsFaceup());
-            if (blue != null && CanUseBlueForChallenge() && ChallengeDesiraeZones(blue, null, Heist) != 0)
+            var partners = new List<ClientCard>();
+            if (blue != null && CanUseBlueForChallenge() && ChallengeHeistZones(blue, null) != 0)
             {
-                var partners = Bot.Graveyard.Where(card => card.IsCanRevive() && ChallengeHeistPartner(card)).ToList();
-                if (partners.Count != 0 && (threatened || HasFreshHeistTarget()))
+                partners = targets.Where(ChallengeHeistPartner).ToList();
+                if (partners.Count != 0 && HasFreshHeistTarget())
                 {
                     AI.SelectCard(partners);
                     return true;
@@ -112,9 +115,9 @@ namespace WindBot.Game.AI.Decks
                     || Duel.CurrentChainInfo.Any(link => link.ActivatePlayer == 0 && link.IsActivateCode(EvilLilLa))))
                 return false;
 
-            var targets = Bot.Graveyard.Where(card => card.IsCanRevive()
-                && (card.HasSetcode(KiSikilSet) || card.HasSetcode(LilLaSet))).ToList();
-            return PrepareBeneficialChallengeRevival(targets, uncoveredTarget) || threatened && targets.Count > 0;
+            bool holdForHeist = !threatened && partners.Count != 0;
+            return PrepareBeneficialChallengeRevival(targets, uncoveredTarget, holdForHeist)
+                || threatened && targets.Count > 0;
         }
 
         private bool PrepareChallengeBattleDefense()
@@ -145,7 +148,7 @@ namespace WindBot.Game.AI.Decks
             return false;
         }
 
-        private bool PrepareBeneficialChallengeRevival(IList<ClientCard> targets, bool uncoveredTarget)
+        private bool PrepareBeneficialChallengeRevival(IList<ClientCard> targets, bool uncoveredTarget, bool holdForHeist)
         {
             if (targets.Count == 0)
                 return false;
@@ -155,7 +158,7 @@ namespace WindBot.Game.AI.Decks
             bool blueOnField = HasFaceupTwin(LilLaSet);
             bool canPop = !BluePopUsed() && uncoveredTarget;
             bool canDraw = !_searchLocked && (_planUsed & Flag(PlanEffect.RedDraw)) == 0;
-            bool canSearch = targets.Any(card => card.IsCode(NewYear)) && !_searchLocked && !_newYearSearched
+            bool canSearch = !holdForHeist && targets.Any(card => card.IsCode(NewYear)) && !_searchLocked && !_newYearSearched
                 && (Bot.HasInDeck(Password) || Bot.HasInGraveyard(Password));
             bool enablesDisconnect = HasSetTrap(Disconnect)
                 && !Bot.GetMonsters().Any(card => card.IsFaceup() && card.HasSetcode(EvilTwinSet));

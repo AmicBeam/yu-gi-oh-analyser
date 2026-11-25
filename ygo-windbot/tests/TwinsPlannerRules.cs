@@ -513,6 +513,25 @@ internal static class TwinsPlannerRules
         var legalMove = System.Linq.Expressions.Expression.Lambda(firstMoveType,
             System.Linq.Expressions.Expression.Constant(true),
             System.Linq.Expressions.Expression.Parameter(firstMoveType.GetGenericArguments()[0])).Compile();
+        var redWithHeldBlues = Activator.CreateInstance(positionType, true);
+        positionType.GetField("Field").SetValue(redWithHeldBlues, new[] { 0, smallBlue, smallRed, 0, 0, 0, 0 });
+        positionType.GetField("Hand").SetValue(redWithHeldBlues, new List<int> { 10045474, smallBlue, 10045474, smallBlue });
+        positionType.GetField("Deck").SetValue(redWithHeldBlues, new List<int> {
+            smallRed, smallRed, frost, frost, frost, 81078880, 82699999, 25150, 25150, 25150,
+            password, trouble, trouble, photo, engraver, 25156, 98360333
+        });
+        positionType.GetField("Grave").SetValue(redWithHeldBlues, new List<int>());
+        var extraCards = (int[])type.GetField("PlanExtraCards", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+        positionType.GetField("Extra").SetValue(redWithHeldBlues, extraCards.ToList());
+        positionType.GetField("Used").SetValue(redWithHeldBlues, 1UL << (int)Enum.Parse(effects, "SmallRed"));
+        positionType.GetField("Normal").SetValue(redWithHeldBlues, true);
+        positionType.GetField("NormalZones").SetValue(redWithHeldBlues, 4);
+        ownSummons.SetValue(redWithHeldBlues, 2);
+        var redPlan = tryTactic.Invoke(executor, new object[] {
+            redWithHeldBlues, System.Diagnostics.Stopwatch.StartNew(), 2000, legalMove
+        });
+        Check(redPlan != null && (int)redPlan.GetType().GetField("Score").GetValue(redPlan) >= 107,
+            "the starter tactics reach the full board with the remaining two Blue Twins in hand");
         var resumedPlan = tryTactic.Invoke(executor, new object[] {
             afterSunny, System.Diagnostics.Stopwatch.StartNew(), 2000, legalMove
         });
@@ -819,6 +838,8 @@ internal static class TwinsPlannerRules
             "drawing another Frost cannot repeat its once-per-turn hand summon");
         CheckChallengeRevival();
         CheckChallengeBattleDefense();
+        CheckChallengeWaitsForHeistTarget();
+        CheckPlanSetsRemainingImpermanence();
         CheckLethalReposition();
         Console.WriteLine("Twins planner rules passed");
     }
@@ -877,6 +898,66 @@ internal static class TwinsPlannerRules
         duel.Fields[0].SetInitialDeck(new[] { NamedCard.Get(61976639) });
         typeof(TwinsExecutor).GetField("_searchLocked", Private).SetValue(executor, false);
         Check(!activate(), "Challenge reserves the complete New Year cycle instead of reviving New Year for an early search");
+    }
+
+    private static void CheckChallengeWaitsForHeistTarget()
+    {
+        const int challenge = 98360333;
+        int faceUp = (int)CardPosition.FaceUpAttack;
+        var duel = new Duel { Player = 1, Turn = 2, Phase = DuelPhase.Main1 };
+        for (int player = 0; player < 2; player++)
+            duel.Fields[player].Init(0, 0, player);
+        string dialogPath = Path.Combine(Path.GetDirectoryName(typeof(GameAI).Assembly.Location), "Dialogs", "default.json");
+        var ai = new GameAI(new GameClient(new WindBot.WindBotInfo { Chat = false, Dialog = dialogPath }), duel);
+        var executor = new TwinsExecutor(ai, duel);
+        ai.Executor = executor;
+        var own = duel.Fields[0];
+        var newYear = new ClientCard(25150, CardLocation.Grave, 0, faceUp);
+        own.Graveyard.Add(newYear);
+        own.Graveyard.Add(new ClientCard(61976639, CardLocation.Grave, 1, faceUp));
+        own.SetInitialDeck(new NamedCard[0]);
+        own.MonsterZone[1] = new ClientCard(36609519, CardLocation.MonsterZone, 1, faceUp);
+        own.MonsterZone[2] = new ClientCard(9205574, CardLocation.MonsterZone, 2, faceUp);
+        own.ExtraDeck.Add(new ClientCard(25153, CardLocation.Extra, 0, 0));
+        var effects = typeof(TwinsExecutor).GetNestedType("PlanEffect", BindingFlags.NonPublic);
+        typeof(TwinsExecutor).GetField("_planUsed", Private).SetValue(executor,
+            (1UL << (int)Enum.Parse(effects, "BluePop")) | (1UL << (int)Enum.Parse(effects, "RedDraw")));
+        var trap = new ClientCard(challenge, CardLocation.SpellZone, 0, (int)CardPosition.FaceDownDefence);
+        Func<bool> activate = () => ai.OnSelectChain(new[] { trap }, new[] { 0 }, new[] { false }, 0) >= 0;
+        Check(!activate(), "Challenge is kept for Heist instead of spending it just to search Password");
+
+        var fresh = new ClientCard(60764609, CardLocation.MonsterZone, 0, faceUp) { Controller = 1 };
+        typeof(ClientCard).GetProperty("Type").SetValue(fresh, fresh.Data.Type);
+        duel.Fields[1].MonsterZone[0] = fresh;
+        Check(activate(), "Challenge is used once the opponent presents a fresh target for Heist");
+
+        own.Graveyard.Remove(newYear);
+        newYear.Location = CardLocation.MonsterZone;
+        own.MonsterZone[0] = newYear;
+        Check(executor.OnSelectYesNo(challenge * 16), "Challenge uses the revived Twin to make Heist into a live target");
+        duel.Fields[1].MonsterZone[0] = null;
+        Check(!executor.OnSelectYesNo(challenge * 16),
+            "Challenge keeps the revived Twin when Blue cleared the last Heist target");
+    }
+
+    private static void CheckPlanSetsRemainingImpermanence()
+    {
+        var main = new MainPhase { CanEndPhase = true };
+        var duel = new Duel { Player = 0, Turn = 1, Phase = DuelPhase.Main1, MainPhase = main };
+        for (int player = 0; player < 2; player++)
+            duel.Fields[player].Init(0, 0, player);
+        string dialogPath = Path.Combine(Path.GetDirectoryName(typeof(GameAI).Assembly.Location), "Dialogs", "default.json");
+        var ai = new GameAI(new GameClient(new WindBot.WindBotInfo { Chat = false, Dialog = dialogPath }), duel);
+        var executor = new TwinsExecutor(ai, duel);
+        ai.Executor = executor;
+        var own = duel.Fields[0];
+        own.SetInitialDeck(new NamedCard[0]);
+        own.MonsterZone[5] = new ClientCard(25154, CardLocation.MonsterZone, 5, (int)CardPosition.FaceUpAttack);
+        var imperm = new ClientCard(10045474, CardLocation.Hand, 0, 0);
+        own.Hand.Add(imperm);
+        main.SpellSetableCards.Add(imperm);
+        Check(ai.OnSelectIdleCmd(main).Action == MainPhaseAction.MainAction.SetSpell,
+            "the completed board plan sets a remaining Infinite Impermanence before ending");
     }
 
     private static void CheckLethalReposition()

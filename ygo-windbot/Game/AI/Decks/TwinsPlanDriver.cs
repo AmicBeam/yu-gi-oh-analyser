@@ -50,7 +50,7 @@ namespace WindBot.Game.AI.Decks
         {
             AddExecutor(ExecutorType.GoToEndPhase, PlanEndPhase);
             AddExecutor(ExecutorType.SpellSet, -1, () => _settleDrawPressure && DefaultSpellSet()
-                || _finishWithBackrow && CanSetRemainingTwinTrap(Card));
+                || _finishWithBackrow && CanSetRemainingBackrow(Card));
             AddExecutor(ExecutorType.GoToEndPhase, () => _settleDrawPressure || _finishWithBackrow);
             foreach (ExecutorType kind in new[] { ExecutorType.Activate, ExecutorType.SpSummon, ExecutorType.Summon, ExecutorType.SpellSet })
                 AddExecutor(kind, -1, ExecuteBoardMove);
@@ -342,8 +342,8 @@ namespace WindBot.Game.AI.Decks
                 _settleDrawPressure = true;
                 return false;
             }
-            // Drawn traps are unknown to the route simulator until the engine adds them to hand.
-            if (Duel.MainPhase.SpellSetableCards.Any(CanSetRemainingTwinTrap))
+            // Use the live set options for backrow the completed plan left in hand.
+            if (Duel.MainPhase.SpellSetableCards.Any(CanSetRemainingBackrow))
             {
                 _finishWithBackrow = true;
                 return false;
@@ -392,8 +392,9 @@ namespace WindBot.Game.AI.Decks
             return improved ? candidate : null;
         }
 
-        private bool CanSetRemainingTwinTrap(ClientCard card) => card.IsCode(Challenge, Disconnect)
-            && CanSetForEndBoard() && !HasSetTrap(PlanCode(card));
+        private bool CanSetRemainingBackrow(ClientCard card) => CanSetForEndBoard()
+            && (card.IsCode(Challenge, Disconnect) && !HasSetTrap(PlanCode(card))
+                || card.IsCode(_CardId.InfiniteImpermanence) && Bot.GetMonsters().Count > 0);
 
         private bool FollowsBoardPriorities(PlanMove move)
         {
@@ -454,7 +455,7 @@ namespace WindBot.Game.AI.Decks
             // Compare two tactical priorities only within the foreground time budget.
             // The offline reference has its own budget and never runs in production.
             // Leave headroom for the engine response and the client's transport.
-            const int timeLimitMs = 3000;
+            const int timeLimitMs = 5000;
             int firstPassMs = recovering ? 1600 : 1250;
             if (tacticalPlan != null && width == 0 && !position.DrawEffects.Active
                 && (tacticalPlan.Score >= 95 || tacticalPlan.Score >= 85 && HasDesiraeControlBoard(tacticalPlan.Terminal))

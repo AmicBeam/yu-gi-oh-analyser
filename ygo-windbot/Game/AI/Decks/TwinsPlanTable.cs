@@ -140,13 +140,14 @@ namespace WindBot.Game.AI.Decks
                 SummonWithExactMaterials(EvilLilLa, NewYear, Sweet), ActivateTactic(EvilLilLa, 1, Deal),
                 SummonWithExactMaterials(Yama, Deal, Engraver),
                 SummonWithExactMaterials(Abao, Yama, EvilLilLa)),
-            new BoardTactic(p => p.Has(Abao) && p.Field.Count(id => id != 0) == 1
-                    && p.Grave.Contains(KiSikil) && p.Grave.Contains(Yama)
-                    && p.Grave.Contains(EvilLilLa) && p.CanRevive(EvilLilLa) && p.Deck.Contains(LilLa)
-                    && p.Hand.Contains(Password) && p.Deck.Contains(Trouble)
-                    && p.Deck.Contains(NightPhoto) && p.Hand.Count > 1 && !p.SearchLocked
-                    && p.Fresh(PlanEffect.Password) && p.Fresh(PlanEffect.Trouble)
-                    && p.Fresh(PlanEffect.Abao) && p.Fresh(PlanEffect.SmallRed) && p.Fresh(PlanEffect.RedRevive),
+            new BoardTactic(p => CanRestartAbaoWithPhoto(p) && p.Grave.Contains(LilLa)
+                    && (p.Deck.Contains(Frost) || p.Hand.Contains(Frost)) && p.Fresh(PlanEffect.SmallBlue),
+                ActivateTactic(Password, 0, Trouble), ActivateTactic(Trouble, 0, NightPhoto),
+                ActivateTactic(Abao, 0, LilLa), ActivateTactic(LilLa, 0, Frost),
+                SummonWithExactMaterials(EvilKiSikil, LilLa, Frost),
+                ActivateTactic(EvilKiSikil, 1, EvilLilLa)),
+            new BoardTactic(p => CanRestartAbaoWithPhoto(p) && p.Grave.Contains(KiSikil)
+                    && (p.Deck.Contains(LilLa) || p.Hand.Contains(LilLa)) && p.Fresh(PlanEffect.SmallRed),
                 ActivateTactic(Password, 0, Trouble), ActivateTactic(Trouble, 0, NightPhoto),
                 ActivateTactic(Abao, 0, KiSikil), ActivateTactic(KiSikil, 0, LilLa),
                 SummonWithExactMaterials(EvilKiSikil, KiSikil, LilLa),
@@ -491,6 +492,14 @@ namespace WindBot.Game.AI.Decks
             && p.Grave.Contains(Deal) && p.CanRevive(Deal)
             && p.Extra.Contains(EvilLilLa) && p.Extra.Contains(Yama) && p.Extra.Contains(Abao)
             && p.Fresh(PlanEffect.BlueRevive);
+
+        private static bool CanRestartAbaoWithPhoto(PlanPosition p) =>
+            p.Has(Abao) && p.Field.Count(id => id != 0) == 1
+            && p.Grave.Contains(Yama) && p.Grave.Contains(EvilLilLa) && p.CanRevive(EvilLilLa)
+            && p.Hand.Contains(Password) && p.Hand.Count > 1 && p.Deck.Contains(Trouble)
+            && p.Deck.Contains(NightPhoto) && !p.SearchLocked
+            && p.Fresh(PlanEffect.Password) && p.Fresh(PlanEffect.Trouble)
+            && p.Fresh(PlanEffect.Abao) && p.Fresh(PlanEffect.RedRevive);
 
         private static bool CanBuildTwinPairFromTrouble(PlanPosition p) =>
             p.Has(KiSikil) && p.Has(LilLa) && p.Hand.Contains(Trouble)

@@ -137,17 +137,24 @@ namespace WindBot.Game.AI.Decks
                 return false;
             foreach (ClientCard partner in Bot.GetMonsters().Where(card => card.IsFaceup() && ChallengeHeistPartner(card)))
             {
-                int zones = ChallengeDesiraeZones(blue, partner, Heist);
-                int mainZones = zones & Zones.MainMonsterZones;
-                if (zones == 0 || mainZones == 0 && Bot.HasInMonstersZone(Gryphon, notDisabled: true, faceUp: true))
+                int zones = ChallengeHeistZones(blue, partner);
+                if (zones == 0)
                     continue;
-                SelectChallengeLink(Heist, blue, partner, mainZones != 0 ? mainZones : zones);
+                SelectChallengeLink(Heist, blue, partner, zones);
                 return true;
             }
             return false;
         }
 
         private bool CanUseBlueForChallenge() => Bot.HasInExtra(Heist) && (_planUsed & Flag(PlanEffect.BluePop)) != 0;
+
+        private int ChallengeHeistZones(ClientCard blue, ClientCard partner)
+        {
+            int zones = ChallengeDesiraeZones(blue, partner, Heist);
+            int mainZones = zones & Zones.MainMonsterZones;
+            return mainZones != 0 ? mainZones
+                : Bot.HasInMonstersZone(Gryphon, notDisabled: true, faceUp: true) ? 0 : zones;
+        }
 
         private static bool ChallengeHeistPartner(ClientCard card) => LinkRating(PlanCode(card)) == 0
             && (card.HasSetcode(KiSikilSet) || card.HasSetcode(LilLaSet));
