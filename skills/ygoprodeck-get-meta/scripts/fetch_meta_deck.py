@@ -19,11 +19,11 @@ import json
 import os
 import re
 import time
-import urllib.request
 import urllib.parse
+import urllib.request
 from datetime import datetime, timedelta
+from http.client import HTTPException
 from typing import Any
-
 
 API_BASE_URL = "https://ygoprodeck.com/api/decks/getDecks.php"
 
@@ -287,8 +287,7 @@ def fetch_decks_single_page(url: str) -> list[dict[str, Any]]:
   Returns:
       List of deck dictionaries (usually 20 items)
 
-  Raises:
-      urllib.error.URLError: If request fails
+  If the request or response decoding fails, log the error and return an empty list.
   """
   try:
     # Create request with headers to mimic a browser
@@ -303,7 +302,7 @@ def fetch_decks_single_page(url: str) -> list[dict[str, Any]]:
     with urllib.request.urlopen(request) as response:
       data = response.read().decode("utf-8")
       return json.loads(data)
-  except Exception as e:
+  except (OSError, HTTPException, ValueError) as e:
     print(f"Error fetching decks: {e}")
     return []
 

@@ -4,7 +4,6 @@
 
 import argparse
 from math import comb
-from typing import Dict
 
 
 def hypergeometric_pmf(
@@ -39,7 +38,7 @@ def hypergeometric_pmf(
 
 def calculate_probabilities(
   deck_size: int, target_count: int, hand_size: int = 5
-) -> Dict[str, float]:
+) -> dict[str, float]:
   """Calculate probabilities for drawing 0 to hand_size target cards.
 
   Args:

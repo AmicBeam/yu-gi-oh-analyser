@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for starter-probability skill."""
 
 import sys
@@ -6,7 +5,7 @@ from pathlib import Path
 
 # Add scripts directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "starter-probability" / "scripts"))
-from starter_probability import hypergeometric_pmf, calculate_probabilities, to_yaml
+from starter_probability import calculate_probabilities, hypergeometric_pmf, to_yaml
 
 
 class TestHypergeometricPmf:
