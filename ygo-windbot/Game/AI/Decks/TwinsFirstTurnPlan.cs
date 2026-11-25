@@ -255,6 +255,11 @@ namespace WindBot.Game.AI.Decks
             return id == _CardId.InfiniteImpermanence ? SetImperm : 0;
         }
 
+        private static bool CanSetHandTrapBackrow(int id, bool controlsCard, bool holdsDrawHandTrap)
+        {
+            return controlsCard || id != _CardId.InfiniteImpermanence && (id != Crossout || !holdsDrawHandTrap);
+        }
+
         // A known in-engine card may be retained as a response, even when it has no combo actions.
         private static bool IsHandTrap(int id)
         {
@@ -1119,14 +1124,17 @@ namespace WindBot.Game.AI.Decks
             // Sets do not supply materials. Explore them as the suffix of a line.
             if (p.SpellSlots >= 5)
                 yield break;
+            bool controlsCard = p.SpellSlots > 0 || Occupied(p.Field) != 0;
+            bool holdsDrawHandTrap = p.Hand.Contains(_CardId.MaxxC) || p.Hand.Contains(Fuwalos);
             foreach (int card in p.Hand.Distinct())
             {
-                if (TrapBit(card) == 0 || (p.Set & TrapBit(card)) != 0)
+                int trap = TrapBit(card);
+                if (trap == 0 || (p.Set & trap) != 0 || !CanSetHandTrapBackrow(card, controlsCard, holdsDrawHandTrap))
                     continue;
                 var next = p.Next(new PlanMove { Card = card, Type = ExecutorType.SpellSet });
                 next.Sealing = true;
                 next.Hand.Remove(card);
-                next.Set |= TrapBit(card);
+                next.Set |= trap;
                 next.SpellSlots++;
                 yield return next;
             }

@@ -168,7 +168,7 @@ namespace WindBot.Game.AI.Decks
                 && PrepareLink(Heist, EvilLilLa, EvilKiSikil, Scout, Deal));
             AddExecutor(ExecutorType.SpellSet, Disconnect, CanSetForEndBoard);
             AddExecutor(ExecutorType.SpellSet, Challenge, CanSetForEndBoard);
-            AddExecutor(ExecutorType.SpellSet, Crossout, CanSetForEndBoard);
+            AddExecutor(ExecutorType.SpellSet, Crossout, () => CanSetRemainingBackrow(Card));
             AddExecutor(ExecutorType.SpellSet, _CardId.InfiniteImpermanence, () => CanSetRemainingBackrow(Card));
             AddExecutor(ExecutorType.Repos, DefaultMonsterRepos);
         }
@@ -207,6 +207,7 @@ namespace WindBot.Game.AI.Decks
             _waitingForNewYearCycle = false;
             _challengeRevivalTarget = null;
             _challengeRevivalPlace = 0;
+            _challengeRevivalForRemoval = false;
             _challengeBattleStarter = 0;
             _opponentActivatedCards.Clear();
             _twinTrapActivated = false;
@@ -322,6 +323,7 @@ namespace WindBot.Game.AI.Decks
             _opponentNightfallPlace = 0;
             _challengeRevivalTarget = null;
             _challengeRevivalPlace = 0;
+            _challengeRevivalForRemoval = false;
             if (_challengeBattleStarter != 0 && (!Bot.HasInMonstersZone(_challengeBattleStarter)
                 || Duel.CurrentChainInfo.Any(link => link.ActivatePlayer == 0 && link.IsActivateCode(_challengeBattleStarter))))
                 _challengeBattleStarter = 0;
@@ -345,11 +347,12 @@ namespace WindBot.Game.AI.Decks
                 return planned.Value;
             if (desc == Util.GetStringId(Challenge, 0))
             {
-                if (_challengeBattleStarter != 0 && InBattle())
+                if (_challengeRevivalForRemoval || _challengeBattleStarter != 0 && InBattle())
                     return false;
                 if (PrepareChallengeDesiraeLink() || PrepareChallengeHeist())
                     return true;
-                if (Duel.Player == 1 && !HasFreshHeistTarget()
+                // On the opponent's turn, Challenge can revive without using the revived monster as material.
+                if (Duel.Player == 1
                     || Bot.HasInMonstersZone(new[] { Nightfall, Sunny, Desirae, Gryphon }))
                     return false;
             }

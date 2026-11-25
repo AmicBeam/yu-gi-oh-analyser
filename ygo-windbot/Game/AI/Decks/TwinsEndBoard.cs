@@ -10,6 +10,7 @@ namespace WindBot.Game.AI.Decks
         private readonly HashSet<ClientCard> _opponentActivatedCards = new HashSet<ClientCard>();
         private ClientCard _challengeRevivalTarget;
         private int _challengeRevivalPlace;
+        private bool _challengeRevivalForRemoval;
         private int _challengeBattleStarter;
 
         private const int EvilTwinSet = 0x2151;
@@ -73,11 +74,23 @@ namespace WindBot.Game.AI.Decks
             bool uncoveredTarget = HasUncoveredChallengeRemoval();
             var desiraePartners = Duel.Player == 0 || uncoveredTarget
                 ? ChallengeDesiraePartners().ToList() : new List<ClientCard>();
+            var targets = Duel.Player == 1 ? Bot.Graveyard.Where(card => card.IsCanRevive()
+                && (card.HasSetcode(KiSikilSet) || card.HasSetcode(LilLaSet))).ToList() : new List<ClientCard>();
+            bool canStartTwinCycle = Duel.Player == 1 && CanStartNewYearTwinCycle();
+            if (Duel.Player == 1 && uncoveredTarget && !BluePopUsed() && !canStartTwinCycle
+                && !CanUseSunny() && !Bot.HasInMonstersZone(Sunny))
+            {
+                bool tradeAndNegate = desiraePartners.Any(card => ChallengeLinkFor(card) == Heist)
+                    && HasFreshHeistTarget() && UncoveredChallengeRemovalTargets().Take(2).Count() == 2;
+                if (!tradeAndNegate && PrepareBeneficialChallengeRevival(targets, true, false, removalOnly: true))
+                    return true;
+            }
             if (desiraePartners.Count > 0)
             {
                 if (Bot.HasInExtra(Heist) && !Duel.ChainTargets.Contains(Card)
                     && (!HasFreshHeistTarget() || CanUseSunny() && !BluePopUsed()))
                     return false;
+                _challengeRevivalTarget = desiraePartners[0];
                 AI.SelectCard(desiraePartners);
                 return true;
             }
@@ -86,7 +99,7 @@ namespace WindBot.Game.AI.Decks
             bool threatened = Duel.ChainTargets.Contains(Card);
             if (!threatened && CanHoldChallengeForDesirae())
                 return false;
-            if (CanStartNewYearTwinCycle())
+            if (canStartTwinCycle)
             {
                 if (uncoveredTarget && HasVisibleEnemyCard())
                 {
@@ -97,8 +110,6 @@ namespace WindBot.Game.AI.Decks
                 if (!threatened)
                     return false;
             }
-            var targets = Bot.Graveyard.Where(card => card.IsCanRevive()
-                && (card.HasSetcode(KiSikilSet) || card.HasSetcode(LilLaSet))).ToList();
             var blue = Bot.GetMonsters().FirstOrDefault(card => card.IsCode(EvilLilLa) && card.IsFaceup());
             var partners = new List<ClientCard>();
             if (blue != null && CanUseBlueForChallenge() && ChallengeHeistZones(blue, null) != 0)
@@ -148,7 +159,8 @@ namespace WindBot.Game.AI.Decks
             return false;
         }
 
-        private bool PrepareBeneficialChallengeRevival(IList<ClientCard> targets, bool uncoveredTarget, bool holdForHeist)
+        private bool PrepareBeneficialChallengeRevival(IList<ClientCard> targets, bool uncoveredTarget, bool holdForHeist,
+            bool removalOnly = false)
         {
             if (targets.Count == 0)
                 return false;
@@ -177,14 +189,15 @@ namespace WindBot.Game.AI.Decks
                         && (_planUsed & Flag(PlanEffect.RedRevive)) == 0 && HasRevivableTwin(EvilLilLa)
                         && !Enemy.HasInMonstersZone(Gryphon, notDisabled: true, faceUp: true)
                         && CanReviveBlue(placement.Field);
-                    bool benefit = enablesDisconnect && target.HasSetcode(EvilTwinSet)
-                        || works && (target.IsCode(EvilKiSikil) && (blueOnField && canDraw || canReviveThenPop)
-                            || target.IsCode(EvilLilLa) && redOnField && canPop
-                            || target.IsCode(NewYear) && canSearch);
+                    bool removesCard = works && (canReviveThenPop || target.IsCode(EvilLilLa) && redOnField && canPop);
+                    bool benefit = removesCard || !removalOnly && (enablesDisconnect && target.HasSetcode(EvilTwinSet)
+                        || works && (target.IsCode(EvilKiSikil) && blueOnField && canDraw
+                            || target.IsCode(NewYear) && canSearch));
                     if (!benefit)
                         continue;
                     _challengeRevivalTarget = target;
                     _challengeRevivalPlace = 1 << zone;
+                    _challengeRevivalForRemoval = removesCard;
                     AI.SelectCard(target);
                     return true;
                 }
@@ -192,9 +205,11 @@ namespace WindBot.Game.AI.Decks
             return false;
         }
 
-        private bool HasUncoveredChallengeRemoval()
+        private bool HasUncoveredChallengeRemoval() => UncoveredChallengeRemovalTargets().Any();
+
+        private IEnumerable<ClientCard> UncoveredChallengeRemovalTargets()
         {
-            return RankDesiraeTargets(Enemy.GetMonsters().Concat(Enemy.GetSpells())).Any(card => !HasPendingRemoval(card)
+            return RankDesiraeTargets(Enemy.GetMonsters().Concat(Enemy.GetSpells())).Where(card => !HasPendingRemoval(card)
                 && (card.Location == CardLocation.MonsterZone || card.HasType(CardType.Continuous)
                     || card.HasType(CardType.Field) || card.HasType(CardType.Equip) || card.HasType(CardType.Pendulum)
                     || !Duel.CurrentChainInfo.Any(link => link.ActivatePlayer == 1 && link.RelatedCard == card)));

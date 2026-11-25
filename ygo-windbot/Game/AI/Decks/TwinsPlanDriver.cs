@@ -49,7 +49,7 @@ namespace WindBot.Game.AI.Decks
         private void RegisterBoardPlanner()
         {
             AddExecutor(ExecutorType.GoToEndPhase, PlanEndPhase);
-            AddExecutor(ExecutorType.SpellSet, -1, () => _settleDrawPressure && DefaultSpellSet()
+            AddExecutor(ExecutorType.SpellSet, -1, () => _settleDrawPressure && CanSetHandTrapBackrow(Card) && DefaultSpellSet()
                 || _finishWithBackrow && CanSetRemainingBackrow(Card));
             AddExecutor(ExecutorType.GoToEndPhase, () => _settleDrawPressure || _finishWithBackrow);
             foreach (ExecutorType kind in new[] { ExecutorType.Activate, ExecutorType.SpSummon, ExecutorType.Summon, ExecutorType.SpellSet })
@@ -259,7 +259,8 @@ namespace WindBot.Game.AI.Decks
             if (move.Type == ExecutorType.SpSummon)
                 return main.SpecialSummonableCards.Any(card => PlanCode(card) == move.Card)
                     && (move.Materials == null || MatchPlanMaterials(move) != null);
-            return move.Type == ExecutorType.SpellSet && main.SpellSetableCards.Any(card => PlanCode(card) == move.Card);
+            return move.Type == ExecutorType.SpellSet && main.SpellSetableCards.Any(card =>
+                PlanCode(card) == move.Card && CanSetHandTrapBackrow(card));
         }
 
         private bool UseOpeningPolicy()
@@ -392,9 +393,14 @@ namespace WindBot.Game.AI.Decks
             return improved ? candidate : null;
         }
 
+        private bool CanSetHandTrapBackrow(ClientCard card) =>
+            !card.IsCode(Crossout, _CardId.InfiniteImpermanence)
+            || CanSetHandTrapBackrow(PlanCode(card), Bot.GetFieldCount() != 0,
+                Bot.HasInHand(_CardId.MaxxC) || Bot.HasInHand(Fuwalos));
+
         private bool CanSetRemainingBackrow(ClientCard card) => CanSetForEndBoard()
             && (card.IsCode(Challenge, Disconnect) && !HasSetTrap(PlanCode(card))
-                || card.IsCode(_CardId.InfiniteImpermanence) && Bot.GetMonsters().Count > 0);
+                || card.IsCode(Crossout, _CardId.InfiniteImpermanence) && CanSetHandTrapBackrow(card));
 
         private bool FollowsBoardPriorities(PlanMove move)
         {
@@ -862,6 +868,7 @@ namespace WindBot.Game.AI.Decks
             var move = NextPlanMove;
             if (!InBoardBuildPhase || _planStopped || _planInterrupted || _settleDrawPressure
                 || move == null || move.Type != Type || PlanCode(Card) != move.Card
+                || Type == ExecutorType.SpellSet && !CanSetHandTrapBackrow(Card)
                 || Type == ExecutorType.Activate && (!MatchesPlanActivation(move, Card, ActivateDescription)
                     || !FollowsBoardPriorities(move)))
                 return false;
