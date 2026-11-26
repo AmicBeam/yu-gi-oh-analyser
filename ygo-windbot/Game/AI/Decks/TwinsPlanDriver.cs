@@ -427,7 +427,18 @@ namespace WindBot.Game.AI.Decks
                 && Bot.GetMonsters().All(card => card.IsFaceup() && !card.IsDisabled());
             bool sameOpening = width != 0 && !recovering
                 && Environment.GetEnvironmentVariable("TWINS_PLAN_FREEZE_OPENING") == "1";
-            var tacticalPlan = TryTacticalContinuation(position, timer, 260);
+            var tacticalPlan = recovering ? TryResourceTactics(position, timer, 650) : null;
+            if (tacticalPlan != null && width == 0 && !tableEligible
+                && (tacticalPlan.Score >= 95
+                    || tacticalPlan.Score >= 75 && !position.Fresh(PlanEffect.Requiem)
+                        && !position.Has(Engraver) && !position.Grave.Contains(Engraver) && !position.Hand.Contains(Engraver)))
+            {
+                TracePlanner("recovery-tactics", tacticalPlan.Score.ToString());
+                return tacticalPlan;
+            }
+            var generalTactic = TryTacticalContinuation(position, timer, 260);
+            if (generalTactic != null && (tacticalPlan == null || BetterBoardPlan(generalTactic, tacticalPlan)))
+                tacticalPlan = generalTactic;
             if (!recovering && position.OwnSummons == 2 && position.Has(KiSikil) && position.Has(LilLa)
                 && !position.SearchLocked && (position.Deck.Contains(NightPhoto) || position.Hand.Contains(NightPhoto))
                 && position.Deck.Contains(NewYear)
@@ -456,6 +467,19 @@ namespace WindBot.Game.AI.Decks
                 TracePlanner("table-hit", tablePlan.Score.ToString());
                 TracePlanner("policy-evaluations", "0 0");
                 return alternative ?? tablePlan;
+            }
+
+            if (!recovering && !position.DrawEffects.Active && (tacticalPlan == null || tacticalPlan.Score < 90))
+            {
+                var resources = TryResourceTactics(position, timer, 700);
+                if (resources != null && (tacticalPlan == null || BetterBoardPlan(resources, tacticalPlan)))
+                    tacticalPlan = resources;
+                if ((tacticalPlan == null || tacticalPlan.Score < 80) && CanTryExtensionTactics(position))
+                {
+                    var extension = TryResourceTactics(position, timer, 850, prioritizeExchanges: true);
+                    if (extension != null && (tacticalPlan == null || BetterBoardPlan(extension, tacticalPlan)))
+                        tacticalPlan = extension;
+                }
             }
 
             // Compare two tactical priorities only within the foreground time budget.
@@ -487,6 +511,18 @@ namespace WindBot.Game.AI.Decks
             {
                 incumbent = tacticalPlan;
                 TracePlanner("tactic-plan", incumbent.Score.ToString());
+            }
+            // A hand trap can leave several ways to rebuild. The narrow first pass
+            // can hit its state limit before finding a finish through another engine.
+            if (recovering && incumbent.Score < 85 && !position.DrawEffects.Active
+                && timer.ElapsedMilliseconds < timeLimitMs - 500)
+            {
+                var recovery = FindBoard(position, PlanOffered, 512, 200000, timer, timeLimitMs - 250);
+                nodes += recovery.States;
+                evaluations += recovery.ScoreEvaluations;
+                TracePlanner("recovery-search", recovery.Score + " " + recovery.States);
+                if (BetterBoardPlan(recovery, incumbent))
+                    incumbent = recovery;
             }
             if (incumbent.Score <= 0 && position.DrawEffects.Active && !position.Normal && Occupied(position.Field) == 0
                 && timer.ElapsedMilliseconds < timeLimitMs - 300)
@@ -538,6 +574,18 @@ namespace WindBot.Game.AI.Decks
                     if (BetterBoardPlan(developed, incumbent))
                         incumbent = developed;
                 }
+            }
+            // Revisit a weak finish when the hand can still develop both engines.
+            if (!recovering && incumbent.Score < 80 && !position.DrawEffects.Active && !position.SearchLocked
+                && (position.Has(Engraver) || position.Hand.Contains(Engraver))
+                && position.Hand.Any(id => id == Password || id == Trouble || id == NightPhoto)
+                && timer.ElapsedMilliseconds < timeLimitMs - 500)
+            {
+                var developed = FindBoard(position, PlanOffered, 512, 180000, timer, timeLimitMs - 250);
+                nodes += developed.States;
+                evaluations += developed.ScoreEvaluations;
+                if (BetterBoardPlan(developed, incumbent))
+                    incumbent = developed;
             }
             if (incumbent.Score < 90 && timer.ElapsedMilliseconds < timeLimitMs - 300)
             {

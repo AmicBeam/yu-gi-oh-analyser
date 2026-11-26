@@ -542,6 +542,31 @@ internal static class TwinsPlannerRules
             && resumedBoard.Contains(nightfall) && ((int)positionType.GetField("Set").GetValue(resumed) & 3) == 3,
             "spent Sunny and Red draw still permit the Desirae, Gryphon and Nightfall finish");
 
+        // A different entry point with no starter, search cards, or Sunny in the graveyard.
+        var fusionPosition = Activator.CreateInstance(positionType, true);
+        positionType.GetField("Field").SetValue(fusionPosition, new[] { 0, nightfall, 0, 0, engraver, sequence, 0 });
+        positionType.GetField("Grave").SetValue(fusionPosition, new List<int> { deal, requiem, bigRed, blue });
+        positionType.GetField("Hand").SetValue(fusionPosition, new List<int> { 14558128 });
+        positionType.GetField("Deck").SetValue(fusionPosition, new List<int>());
+        positionType.GetField("Extra").SetValue(fusionPosition, new List<int> { lacrimaFusion, Gryphon, caesar });
+        positionType.GetField("Set").SetValue(fusionPosition, 3);
+        var recovery = type.GetMethod("TryResourceTactics", Private).Invoke(executor, new object[] {
+            fusionPosition, System.Diagnostics.Stopwatch.StartNew(), 650, legalMove, false
+        });
+        Check(recovery != null, "recovery tactics can start from a fusion-ready field");
+        var recoveryTerminal = recovery.GetType().GetField("Terminal").GetValue(recovery);
+        var recoveryBoard = (int[])positionType.GetField("Field").GetValue(recoveryTerminal);
+        Check(recoveryBoard.Contains(Gryphon) && recoveryBoard.Contains(caesar) && recoveryBoard.Contains(nightfall),
+            "recovery composes fusion, Gryphon and Caesar with different fusion materials");
+
+        var sequenceEntry = Activator.CreateInstance(positionType, true);
+        positionType.GetField("Field").SetValue(sequenceEntry, new[] { smallBlue, nightfall, 0, 0, engraver, 0, 0 });
+        positionType.GetField("Hand").SetValue(sequenceEntry, new List<int>());
+        positionType.GetField("Extra").SetValue(sequenceEntry, new List<int> { sequence });
+        var canTryExtension = type.GetMethod("CanTryExtensionTactics", BindingFlags.Static | BindingFlags.NonPublic);
+        Check((bool)canTryExtension.Invoke(null, new[] { sequenceEntry }),
+            "a live small Twin and Engraver can open extension tactics without Treat in hand");
+
         var negateDuel = new Duel { Player = 1, Phase = DuelPhase.Main1, LastChainPlayer = 1 };
         for (int player = 0; player < 2; player++)
             negateDuel.Fields[player].Init(0, 0, player);

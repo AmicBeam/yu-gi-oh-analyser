@@ -15,6 +15,7 @@ namespace WindBot.Game.AI.Decks
     {
         private const int TableInertDiscard = -2;
         private const int TableVersion = 2;
+        private static readonly bool OpeningTableEnabled = Environment.GetEnvironmentVariable("TWINS_PLAN_OPENING_TABLE") == "1";
         private static readonly Lazy<Dictionary<string, TablePlan>> OpeningTable =
             new Lazy<Dictionary<string, TablePlan>>(() => ReadOpeningTable(Path.Combine("Decks", "AI_Twins.plan.jsonl")));
         private static bool SameComboCards(int[] first, int[] second)
@@ -97,6 +98,190 @@ namespace WindBot.Game.AI.Decks
         private static Func<PlanPosition, PlanMove, bool> SummonWithExactMaterials(int card, params int[] materials) =>
             (state, move) => move.Type == ExecutorType.SpSummon && move.Card == card
                 && SameComboCards(move.MaterialIds, materials);
+
+        // Resource exchanges that can be chained from any legal position.
+        private static readonly BoardTactic[] ResourceTactics =
+        {
+            new BoardTactic(p => p.Field.Any(IsRedTwin) && p.Deck.Contains(Sweet)
+                    && p.Fresh(PlanEffect.Deal) && p.Fresh(PlanEffect.Sweet),
+                SummonTactic(Deal), ActivateTactic(Deal, 0, Sweet), ActivateTactic(Sweet, 1)),
+            new BoardTactic(p => p.Has(Deal) && p.Has(Sweet) && p.Fresh(PlanEffect.RedRevive),
+                SummonWithExactMaterials(EvilKiSikil, Deal, Sweet), ActivateTactic(EvilKiSikil, 1, Sweet)),
+            new BoardTactic(p => p.Has(EvilKiSikil) && p.Field.Any(IsBlueTwin) && p.Fresh(PlanEffect.BlueRevive)
+                    && p.Fresh(PlanEffect.RedDraw),
+                SummonTactic(EvilLilLa, EvilKiSikil), ActivateTactic(EvilLilLa, 1, EvilKiSikil), ActivateTactic(EvilKiSikil, 0)),
+            new BoardTactic(p => p.Hand.Contains(NightPhoto) && p.Grave.Contains(Deal) && p.Grave.Any(id => IsTwin(id) && id != Deal)
+                    && p.Fresh(PlanEffect.Photo) && p.Fresh(PlanEffect.PhotoRevive) && PhotoRevivalCost(p) != 0,
+                (p, move) => move.Card == NightPhoto && move.Effect == 0 && move.Target != Deal,
+                ActivateTactic(NightPhoto, 1, Deal)),
+            new BoardTactic(p => p.Has(LacrimaFusion) && p.Has(Sequence) && p.Grave.Contains(Engraver)
+                    && p.Has(EvilKiSikil) && p.Fresh(PlanEffect.Engraver) && p.Extra.Contains(Caesar),
+                SummonWithExactMaterials(Gryphon, Sequence, EvilKiSikil),
+                ActivateTactic(Engraver, 2, Sequence), SummonWithExactMaterials(Caesar, Engraver, LacrimaFusion)),
+            new BoardTactic(p => p.Field.Any(LightFiend) && p.Extra.Contains(Requiem) && !p.Requiem
+                    && p.Fresh(PlanEffect.Requiem) && (p.Hand.Contains(Engraver) || p.Deck.Contains(Engraver)),
+                SummonTactic(Requiem), ActivateTactic(Requiem, 0, Engraver)),
+            new BoardTactic(p => p.Field.Any(IsRedTwin) && p.Field.Any(IsBlueTwin)
+                    && p.Fresh(PlanEffect.RedRevive) && p.Fresh(PlanEffect.Requiem),
+                SummonTactic(EvilKiSikil),
+                (p, move) => move.Card == EvilKiSikil && move.Effect == 1
+                    && IsBlueTwin(move.Target) && !Evil(move.Target)),
+            new BoardTactic(p => p.Has(EvilKiSikil) && p.Field.Any(IsBlueTwin)
+                    && p.Fresh(PlanEffect.Requiem) && !p.Requiem && p.Fresh(PlanEffect.BlueRevive),
+                SummonTactic(Requiem, EvilKiSikil), ActivateTactic(Requiem, 0, Engraver),
+                SummonTactic(EvilLilLa, Engraver), ActivateTactic(EvilLilLa, 1, EvilKiSikil), ActivateTactic(EvilKiSikil, 0)),
+            new BoardTactic(p => p.Hand.Contains(NightPhoto) && p.Grave.Contains(EvilKiSikil)
+                    && p.Grave.Any(id => IsTwin(id) && id != EvilKiSikil)
+                    && p.Fresh(PlanEffect.Photo) && p.Fresh(PlanEffect.PhotoRevive) && PhotoRevivalCost(p) != 0,
+                (p, move) => move.Card == NightPhoto && move.Effect == 0 && move.Target != EvilKiSikil,
+                ActivateTactic(NightPhoto, 1, EvilKiSikil)),
+            new BoardTactic(p => p.Hand.Contains(Treat) && p.Field.Any(IsRedTwin)
+                    && p.Extra.Contains(Scout) && p.Fresh(PlanEffect.Scout),
+                SummonTactic(Treat), SummonWithExactMaterials(Scout, Treat),
+                (p, move) => move.Card == Scout && move.Effect == 0),
+            new BoardTactic(p => p.Has(EvilKiSikil) && p.Has(Scout) && p.Fresh(PlanEffect.Deal)
+                    && p.Extra.Contains(Deal) && p.Extra.Contains(Sequence),
+                SummonWithExactMaterials(Deal, EvilKiSikil),
+                (p, move) => move.Card == Deal && move.Effect == 0,
+                SummonWithExactMaterials(Sequence, Deal, Scout)),
+            new BoardTactic(p => p.Has(LacrimaFusion) && p.Grave.Contains(Engraver)
+                    && p.Fresh(PlanEffect.Engraver) && p.Extra.Contains(Caesar),
+                ActivateTactic(Engraver, 2), SummonWithExactMaterials(Caesar, Engraver, LacrimaFusion)),
+            new BoardTactic(p => p.Field.Any(IsRedTwin) && p.Deck.Contains(Sweet) && p.Fresh(PlanEffect.Sweet)
+                    && p.Fresh(PlanEffect.Deal) && p.Fresh(PlanEffect.Requiem),
+                SummonTactic(Deal), ActivateTactic(Deal, 0, Sweet), ActivateTactic(Sweet, 1),
+                SummonTactic(Requiem, Deal), ActivateTactic(Requiem, 0, Engraver)),
+            new BoardTactic(p => p.Field.Any(IsRedTwin) && p.Has(Sweet) && p.Has(Engraver) && p.Grave.Contains(Deal)
+                    && p.Fresh(PlanEffect.BlueRevive) && p.Fresh(PlanEffect.Engraver),
+                SummonTactic(EvilLilLa, Sweet), ActivateTactic(EvilLilLa, 1, Deal),
+                SummonWithExactMaterials(Yama, Deal, Engraver), ActivateTactic(Engraver, 2, Deal)),
+            new BoardTactic(p => p.Hand.Contains(Trouble) && p.Hand.Contains(Password)
+                    && p.Deck.Contains(NightPhoto) && p.Deck.Contains(Trouble) && !p.SearchLocked
+                    && p.Fresh(PlanEffect.Trouble) && p.Fresh(PlanEffect.Password),
+                ActivateTactic(Trouble, 0, NightPhoto), ActivateTactic(Password, 0, Trouble)),
+            new BoardTactic(p => p.Hand.Contains(Password) && !p.Hand.Contains(Trouble)
+                    && p.Deck.Contains(NightPhoto) && p.Deck.Contains(Trouble) && !p.SearchLocked
+                    && p.Fresh(PlanEffect.Trouble) && p.Fresh(PlanEffect.Password),
+                ActivateTactic(Password, 0, Trouble), ActivateTactic(Trouble, 0, NightPhoto)),
+            new BoardTactic(p => p.Has(Yama) && p.Has(EvilLilLa) && p.Hand.Contains(NightPhoto)
+                    && p.Hand.Contains(Frost) && p.Grave.Any(IsBlueTwin) && p.Extra.Contains(Abao),
+                (p, move) => move.Card == NightPhoto && move.Effect == 0 && IsBlueTwin(move.Target),
+                SummonTactic(Frost), SummonWithExactMaterials(Abao, Yama, EvilLilLa), ActivateTactic(NightPhoto, 1, EvilLilLa)),
+            new BoardTactic(p => p.Has(Frost) && p.Has(EvilLilLa) && p.Fresh(PlanEffect.RedRevive),
+                SummonWithExactMaterials(EvilKiSikil, Frost, EvilLilLa), ActivateTactic(EvilKiSikil, 1, EvilLilLa)),
+            new BoardTactic(p => p.Has(EvilKiSikil) && p.Has(EvilLilLa) && p.Fresh(PlanEffect.Sunny)
+                    && p.Fresh(PlanEffect.RedDraw),
+                SummonWithExactMaterials(Sunny, EvilKiSikil, EvilLilLa), SplitTacticalPair, ActivateTactic(EvilKiSikil, 0)),
+            new BoardTactic(p => p.Has(Abao) && p.Has(EvilLilLa) && p.Deck.Contains(Frost)
+                    && p.Fresh(PlanEffect.Scout) && p.Fresh(PlanEffect.Abao) && p.Fresh(PlanEffect.BluePop),
+                SummonWithExactMaterials(Scout, EvilLilLa), ActivateTactic(Scout, 0, Frost),
+                ActivateTactic(Abao, 0, EvilLilLa), ActivateTactic(EvilLilLa, 0, Trouble)),
+            new BoardTactic(p => p.Has(Scout) && p.Grave.Contains(Yama) && p.Grave.Contains(Sunny)
+                    && p.Fresh(PlanEffect.Yama) && (p.Pending & Flag(PlanEffect.Yama)) != 0,
+                ActivateTactic(Yama, 1, Sunny), SummonWithExactMaterials(Sequence, Scout, Sunny)),
+            new BoardTactic(p => p.Has(EvilKiSikil) && p.Has(EvilLilLa) && p.Fresh(PlanEffect.Nightfall),
+                SummonWithExactMaterials(Nightfall, EvilKiSikil, EvilLilLa), ActivateTactic(Nightfall, 0)),
+            new BoardTactic(p => p.Has(Sequence) && p.Fresh(PlanEffect.Fusion) && p.Fresh(PlanEffect.FusionRevive)
+                    && p.Grave.Contains(EvilKiSikil) && p.Grave.Count(LightFiend) >= 2,
+                (p, move) => move.Card == Sequence && move.Fusion == LacrimaFusion
+                    && !move.Selection.Contains(EvilKiSikil) && !move.Selection.Contains(Engraver),
+                ActivateTactic(LacrimaFusion, 0, EvilKiSikil)),
+            new BoardTactic(p => p.Has(EvilKiSikil) && p.Has(Sequence) && p.Extra.Contains(Gryphon),
+                SummonWithExactMaterials(Gryphon, EvilKiSikil, Sequence)),
+            new BoardTactic(p => p.Has(Engraver) && p.Has(LacrimaFusion) && p.Extra.Contains(Caesar),
+                SummonWithExactMaterials(Caesar, Engraver, LacrimaFusion)),
+            new BoardTactic(p => p.Field.Any(id => IsRedTwin(id) && id != EvilKiSikil) && p.Has(Sweet)
+                    && p.Hand.Contains(Frost) && p.Fresh(PlanEffect.FrostSummon) && p.Fresh(PlanEffect.RedDraw),
+                SummonTactic(Frost), SummonTactic(EvilKiSikil, Frost), ActivateTactic(EvilKiSikil, 0),
+                SummonWithExactMaterials(EvilLilLa, EvilKiSikil, Sweet), ActivateTactic(EvilLilLa, 1, EvilKiSikil)),
+            new BoardTactic(p => p.Hand.Contains(NightPhoto) && p.Grave.Any(IsRedTwin)
+                    && p.Grave.Contains(EvilKiSikil) && p.Grave.Contains(Sweet) && p.Fresh(PlanEffect.RedRevive)
+                    && p.Fresh(PlanEffect.Photo) && p.Fresh(PlanEffect.PhotoRevive),
+                (p, move) => move.Card == NightPhoto && move.Effect == 0 && IsRedTwin(move.Target) && move.Target != EvilKiSikil,
+                ActivateTactic(NightPhoto, 1, EvilKiSikil), ActivateTactic(EvilKiSikil, 1, Sweet)),
+            new BoardTactic(p => p.Has(EvilKiSikil) && p.Has(Sweet) && p.Extra.Contains(Sequence),
+                SummonWithExactMaterials(Sequence, EvilKiSikil, Sweet)),
+            new BoardTactic(p => p.Has(EvilKiSikil) && p.Has(LacrimaFusion) && p.Has(Sequence)
+                    && p.Fresh(PlanEffect.Sunny) && p.Extra.Contains(Yama),
+                SummonWithExactMaterials(Yama, LacrimaFusion, Sequence), SummonWithExactMaterials(Sunny, EvilKiSikil, Yama),
+                SplitTacticalPair, ActivateTactic(EvilLilLa, 0, Trouble)),
+            new BoardTactic(p => p.Has(EvilLilLa) && p.Grave.Contains(Sequence) && p.Grave.Contains(Yama)
+                    && p.Fresh(PlanEffect.Yama) && p.Fresh(PlanEffect.Abao) && (p.Pending & Flag(PlanEffect.Yama)) != 0,
+                ActivateTactic(Yama, 1, Sequence), SummonWithExactMaterials(Abao, Sequence, EvilLilLa),
+                ActivateTactic(Abao, 0, Sequence)),
+            new BoardTactic(p => p.Has(Gryphon) && p.Hand.Count != 0 && p.Grave.Contains(Challenge),
+                ActivateTactic(Gryphon, 0, Challenge)),
+        };
+
+        private static readonly BoardTactic[] ExtensionTactics =
+        {
+            new BoardTactic(p => p.Has(Deal) && p.Hand.Contains(Treat) && p.Extra.Contains(Requiem)
+                    && !p.Requiem && p.Fresh(PlanEffect.Requiem)
+                    && (p.Hand.Contains(Engraver) || p.Deck.Contains(Engraver)),
+                SummonTactic(Treat), SummonWithExactMaterials(Requiem, Deal), ActivateTactic(Requiem, 0, Engraver)),
+            new BoardTactic(p => p.Field.Any(IsBlueTwin) && p.Extra.Contains(Scout) && p.Fresh(PlanEffect.Scout)
+                    && p.Deck.Contains(Frost) && !p.Grave.Contains(Frost) && CanJumpNewYear(p),
+                SummonTactic(Scout), ActivateTactic(Scout, 0, Frost), ActivateTactic(NewYear, 0, Scout)),
+            new BoardTactic(p => p.Has(Engraver) && p.Extra.Contains(Sequence)
+                    && p.Field.Any(id => IsTwin(id) && LinkRating(id) == 0) && p.Fresh(PlanEffect.Fusion),
+                (p, move) => move.Type == ExecutorType.SpSummon && move.Card == Sequence
+                    && move.MaterialIds.Contains(Engraver)
+                    && move.MaterialIds.Any(id => IsTwin(id) && LinkRating(id) == 0)),
+        };
+
+        private static bool CanTryExtensionTactics(PlanPosition position) =>
+            position.Hand.Contains(Treat) && position.Extra.Contains(Scout) && position.Fresh(PlanEffect.Scout)
+            || ExtensionTactics.Any(tactic => tactic.Ready(position));
+
+        private PlanResult TryResourceTactics(PlanPosition start, Stopwatch timer, int deadline,
+            Func<PlanMove, bool> firstMove = null, bool prioritizeExchanges = false)
+        {
+            if (start.DrawEffects.Active || start.Sealing)
+                return null;
+
+            firstMove = firstMove ?? PlanOffered;
+            var tactics = prioritizeExchanges ? ResourceTactics.Concat(ExtensionTactics).ToArray() : ResourceTactics;
+            var frontier = new List<PlanPosition> { start };
+            var visited = new HashSet<string> { start.SearchKey() };
+            int evaluations = 0;
+            start.Score = EndBoardScore(start, true);
+            var best = start;
+            while (frontier.Count != 0 && timer.ElapsedMilliseconds < deadline)
+            {
+                var successors = new List<PlanPosition>();
+                foreach (var position in frontier)
+                {
+                    if (timer.ElapsedMilliseconds >= deadline)
+                        break;
+                    foreach (var tactic in tactics.Where(tactic => tactic.Ready(position)))
+                    foreach (var next in ApplyTactic(position, tactic, position == start ? firstMove : null, timer, deadline))
+                    {
+                        if (!visited.Add(next.SearchKey()))
+                            continue;
+                        evaluations++;
+                        next.Score = EndBoardScore(next, true);
+                        next.Potential = ContinuationRank(next)
+                            + (prioritizeExchanges ? ResourceExchangeRank(next) : next.Score);
+                        successors.Add(next);
+                        if (next.Score > best.Score || next.Score == best.Score && PreferEnd(next, best))
+                            best = next;
+                    }
+                }
+                var ranked = successors.OrderByDescending(position => position.Potential)
+                    .GroupBy(position => position.SearchKey(ignorePlacement: true))
+                    .SelectMany(group => group.Take(prioritizeExchanges ? 4 : 6));
+                if (prioritizeExchanges)
+                {
+                    // Keep routes that have spent different effects on their way into an engine.
+                    var ordered = ranked.ToList();
+                    var families = ordered.GroupBy(position => (SearchFamily(position), position.Used))
+                        .Select(group => group.First()).Take(12);
+                    ranked = ordered.Take(16).Concat(families).Distinct();
+                }
+                frontier = ranked.Take(24).ToList();
+            }
+            return best == start ? null : TacticalResult(best, visited.Count - 1, evaluations);
+        }
 
         // Each tactic starts from usable resources. Its legal targets, materials and
         // placements are resolved anew, so it can also run after an interrupted line.
@@ -661,13 +846,18 @@ namespace WindBot.Game.AI.Decks
             }
             if (best == start)
                 return null;
+            return TacticalResult(best, visited.Count - 1, evaluations);
+        }
+
+        private static PlanResult TacticalResult(PlanPosition best, int states, int evaluations)
+        {
             var moves = new List<PlanMove>();
             for (var step = best; step.Previous != null; step = step.Previous)
                 if (step.Move != null)
                     moves.Add(step.Move);
             moves.Reverse();
             return new PlanResult { Moves = moves, Terminal = best, Score = best.Score, ReturnZone = best.AbaoZone,
-                States = visited.Count - 1, ScoreEvaluations = evaluations };
+                States = states, ScoreEvaluations = evaluations };
         }
 
         private static bool HasCenteredDesiraeForGryphon(PlanPosition p) =>
@@ -764,6 +954,8 @@ namespace WindBot.Game.AI.Decks
         private bool TryTablePlan(PlanPosition position, bool recovering, Stopwatch timer, out PlanResult result)
         {
             result = null;
+            if (!OpeningTableEnabled)
+                return false;
             var table = OpeningTable.Value;
             if (table.Count == 0 || !table.TryGetValue(TableKey(position, recovering), out TablePlan entry)
                 || !PlanOffered(entry.Moves[0]))

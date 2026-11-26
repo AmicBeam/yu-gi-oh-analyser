@@ -80,7 +80,7 @@ ygo-db-cli get-cards-by-ydk -i deck.ydk -o deck_raw.csv
 
 房主可以在 SRVPro2 的普通房间聊天里输入 `/AI` 添加人机，也可以用 `/AI 双子` 指定这套卡组。[仓库中的人机牌表](ygo-windbot/Decks/AI_Twins.ydk) 使用「双子 (2)」狮鹫版的主卡和额外卡组（3 霜精、3 璃拉原皮、1 秘密口令句、2 麻烦桑），副卡组为空。
 
-[双子执行器](ygo-windbot/Game/AI/Decks/TwinsExecutor.cs) 面向 [SRVPro2 使用的 WindBot 分支](https://code.moenext.com/nanahira/windbot)，已在提交 `6abb46a36a1da10fa37521ff2bb37c63aa90fcb9` 上构建。人机按起手、已用效果和可用站位选择开局表或搜索路线，再按终场得分排序。引擎在镇魂棺落地时给出快速效果窗口，执行器会优先发动并解放镇魂棺作为代价。
+[双子执行器](ygo-windbot/Game/AI/Decks/TwinsExecutor.cs) 面向 [SRVPro2 使用的 WindBot 分支](https://code.moenext.com/nanahira/windbot)，已在提交 `6abb46a36a1da10fa37521ff2bb37c63aa90fcb9` 上构建。人机按当前资源、已用效果和可用站位组合短连招，需要时用限时搜索补全，再按终场得分排序。开局缓存可显式开启用于对拍。引擎在镇魂棺落地时给出快速效果窗口，执行器会优先发动并解放镇魂棺作为代价。
 
 复现构建时，把 `ygo-windbot` 下的 `Game` 和 `Decks` 中的文件放到 WindBot 对应目录，应用 [回环监听补丁](ygo-windbot/loopback.patch)，然后构建 Release。把 [bot 名单](ygo-windbot/bots.json) 和 `cards.cdb` 放到运行目录。卡库可用 [合并脚本](ygo-windbot/merge-cards.py) 从服务器基础库和扩展 YPK 构建，参数中的 YPK 按加载优先级从低到高传入。
 

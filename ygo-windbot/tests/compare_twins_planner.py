@@ -322,6 +322,10 @@ def play(work, output, label, seat, port, bot_port, width=None, states=None, *,
     for flag in ("TWINS_PLAN_WIDTH", "TWINS_PLAN_STATES", "TWINS_PLAN_REFERENCE_MS",
                  "TWINS_PLAN_FREEZE_OPENING", "TWINS_PLAN_EXPORT"):
         variables.pop(flag, None)
+    if (work / "Decks" / "AI_Twins.plan.jsonl").is_file():
+        variables["TWINS_PLAN_OPENING_TABLE"] = "1"
+    else:
+        variables.pop("TWINS_PLAN_OPENING_TABLE", None)
     if second:
         variables.update(TWINS_GO_SECOND="1", TWINS_OPPONENT_MONSTER=str(opponent_monster))
     if ash_target:

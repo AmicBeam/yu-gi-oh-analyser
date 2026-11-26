@@ -9,7 +9,7 @@ description: 构建、调试或回归测试 SRVPro2 的双子 WindBot。适用�
 
 ## 本地构建
 
-1. 在独立的 WindBot 构建目录中准备 SRVPro2 使用的 WindBot 分支，基线提交为 `6abb46a36a1da10fa37521ff2bb37c63aa90fcb9`。复制 `Game` 和 `Decks` 覆盖文件，应用 `ygo-windbot/loopback.patch`，按上游构建约定生成 Release，保留 `Decks/AI_Twins.plan.jsonl`。
+1. 在独立的 WindBot 构建目录中准备 SRVPro2 使用的 WindBot 分支，基线提交为 `6abb46a36a1da10fa37521ff2bb37c63aa90fcb9`。复制 `Game` 和 `Decks` 覆盖文件，应用 `ygo-windbot/loopback.patch`，按上游构建约定生成 Release。部署时使用默认的短连招和限时搜索。需要对拍开局缓存时，使用仓库保留的 `Decks/AI_Twins.plan.jsonl`。
 2. 在 Release 运行目录准备 `Dialogs/`、`Decks/`、`bots.json` 和 `cards.cdb`。给已有 bot 名单追加双子项时保留其他条目。需要自定义卡时先用 `ygo-ypk` 构建扩展，再按优先级从低到高传入合并脚本。
 
    ```sh
