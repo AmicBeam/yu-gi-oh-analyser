@@ -1160,8 +1160,6 @@ namespace WindBot.Game.AI.Decks
                 return null;
             if (description == Util.GetStringId(Nightfall, 2) && _planSetTraps != null)
                 return _planSetTraps.Count != 0;
-            if (description == Util.GetStringId(Yama, 2))
-                return false;
             return null;
         }
 

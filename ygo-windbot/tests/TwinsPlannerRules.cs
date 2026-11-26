@@ -573,6 +573,11 @@ internal static class TwinsPlannerRules
         string dialogPath = Path.Combine(Path.GetDirectoryName(typeof(GameAI).Assembly.Location), "Dialogs", "default.json");
         var ai = new GameAI(new GameClient(new WindBot.WindBotInfo { Dialog = dialogPath }), negateDuel);
         ai.Executor = new TwinsExecutor(ai, negateDuel);
+        const int yamaDestroyPrompt = 24269961 * 16 + 2;
+        Check(!ai.Executor.OnSelectYesNo(yamaDestroyPrompt), "Yama skips destroying an own card on the opponent's turn");
+        negateDuel.Player = 0;
+        Check(!ai.Executor.OnSelectYesNo(yamaDestroyPrompt), "Yama skips destruction even without an active own-turn plan");
+        negateDuel.Player = 1;
         var tamayori = new ClientCard(101307018, CardLocation.MonsterZone, 2, faceUp) { Controller = 1 };
         var susa = new ClientCard(17020474, CardLocation.MonsterZone, 5, faceUp) { Controller = 1 };
         typeof(ClientCard).GetProperty("Attack").SetValue(susa, susa.Data.Attack);

@@ -347,6 +347,8 @@ namespace WindBot.Game.AI.Decks
 
         public override bool OnSelectYesNo(int desc)
         {
+            if (desc == Util.GetStringId(Yama, 2))
+                return false;
             bool? planned = BoardPlanYesNo(desc);
             if (planned.HasValue)
                 return planned.Value;
