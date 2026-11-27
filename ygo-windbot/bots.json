@@ -3,6 +3,11 @@
     {
       "name": "双子",
       "deck": "Twins"
+    },
+    {
+      "name": "亚马逊",
+      "deck": "Amazoness",
+      "hidden": true
     }
   ]
 }

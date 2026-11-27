@@ -13,6 +13,7 @@ The source of truth for repository skills. The root `.agents/skills/` entries li
 | [ygoprodeck-get-meta](ygoprodeck-get-meta/SKILL.md) | Downloads tournament decks as JSON or YDK for TCG, OCG, or Genesys. |
 | [ygo-ypk](ygo-ypk/SKILL.md) | Builds and checks a custom-card expansion from local resources. Requires the repository checkout. |
 | [ygo-windbot](ygo-windbot/SKILL.md) | Builds and tests the Twins WindBot overlay. Requires the repository checkout and a compatible local runtime. |
+| [ygo-bot-builder](ygo-bot-builder/SKILL.md) | Builds a deck-specific duel bot with reusable scoring, engine search and named SRVPro2 deployment. |
 
 ### Analysis Helpers
 
