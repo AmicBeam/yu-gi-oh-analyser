@@ -1,0 +1,8 @@
+[
+  {"id": "fresh-belle-red", "scenario": "belle", "seed": 20261211, "hand": [36326160, 27204311, 14558128, 59438930, 23434538]},
+  {"id": "fresh-belle-blue", "scenario": "belle", "seed": 20261212, "hand": [73810864, 27204311, 14558128, 59438930, 23434538]},
+  {"id": "fresh-nibiru-red", "scenario": "nibiru", "seed": 20261213, "hand": [36326160, 14558128, 59438930, 42141493, 10045474]},
+  {"id": "fresh-nibiru-blue", "scenario": "nibiru", "seed": 20261214, "hand": [73810864, 14558128, 59438930, 42141493, 10045474]},
+  {"id": "fresh-droll-red", "scenario": "droll", "seed": 20261215, "hand": [36326160, 25150, 37582948, 59438930, 14558128]},
+  {"id": "fresh-droll-blue", "scenario": "droll", "seed": 20261216, "hand": [73810864, 25150, 37582948, 59438930, 10045474]}
+]

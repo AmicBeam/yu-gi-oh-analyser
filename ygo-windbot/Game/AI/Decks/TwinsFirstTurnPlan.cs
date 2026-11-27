@@ -159,7 +159,7 @@ namespace WindBot.Game.AI.Decks
 
         private const int SetDisconnect = 1, SetChallenge = 2, SetCrossout = 4, SetImperm = 8;
         private const int NibiruThreshold = 5;
-        private const int NibiruDefensePoints = 10;
+        private const int NibiruDefensePoints = ScoreUnitsPerPoint;
 
         private static bool CanAccessPhoto(PlanPosition p, bool pendingNewYear = false)
         {

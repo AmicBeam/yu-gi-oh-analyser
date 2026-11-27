@@ -95,18 +95,25 @@ namespace WindBot.Game.AI.Decks
             long holdScore = lines.Any(clear => clear.SendCost != null) ? BattleClearScore(current, 0) : long.MinValue;
             BattleClear best = null;
             long bestScore = long.MinValue;
+            double bestPreference = 0;
             foreach (BattleClear clear in lines)
             {
                 long score = EvaluateBattleClear(current, clear, 0, 0);
-                if (score > bestScore && (clear.SendCost == null || score > holdScore))
+                if (score < bestScore || clear.SendCost != null && score <= holdScore)
+                    continue;
+                double preference = SecondTurnClearPreference(clear);
+                if (score > bestScore || preference > bestPreference)
                 {
                     best = clear;
                     bestScore = score;
+                    bestPreference = preference;
                 }
             }
 
             if (best == null || Card != best.Source)
                 return false;
+            if (SecondTurnRankingActive)
+                TracePlanner("twins2-clear", best.Source.Id.ToString());
             if (best.Materials != null)
             {
                 if (Type != ExecutorType.SpSummon)
@@ -562,6 +569,9 @@ namespace WindBot.Game.AI.Decks
             }
             int removed = Enemy.GetMonsters().Count + Enemy.GetSpells().Count
                 - position.Defenders.Count - position.Backrow.Count;
+            if (canBattle && SecondTurnRankingActive)
+                return (damage >= Enemy.LifePoints && Enemy.LifePoints > 0 ? 1000000000000L : 0)
+                    + removed * 100000000L + System.Math.Min(damage, 99999) * 1000L + interactions * 100L - steps;
             // Compare lethal, interactions, cards cleared, damage, then the number of actions.
             return (damage >= Enemy.LifePoints && Enemy.LifePoints > 0 ? 100000000000L : 0)
                 + interactions * 100000000L + removed * 1000000L + System.Math.Min(damage, 99999) * 10L - steps;
@@ -582,6 +592,8 @@ namespace WindBot.Game.AI.Decks
             var position = CurrentBattlePosition();
             ClientCard target = RankDesiraeTargets(position.Defenders.Concat(position.Backrow)).Where(card => !card.IsMonsterInvincible())
                 .OrderByDescending(card => BattleClearScore(ProjectClear(position, new BattleClear { Target = card }), 1))
+                .ThenByDescending(card => SecondTurnRankingActive
+                    ? SecondTurnPreference("SelectCard", SecondTurnTargetKey(card), Duel.Phase) : 0)
                 .FirstOrDefault();
             if (target == null)
                 return false;

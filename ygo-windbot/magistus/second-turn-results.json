@@ -1,0 +1,375 @@
+{
+  "half_hour": {
+    "windows": {
+      "status": "completed",
+      "started": "2026-11-26T18:49:04.040Z",
+      "deadline": "2026-11-26T19:19:04.040Z",
+      "cases": 2586,
+      "attempts": 258310,
+      "settled": 254957,
+      "wins": 17071,
+      "main2": 237884,
+      "interrupted": 250235,
+      "effects": 18571,
+      "verified": 2574,
+      "pairs": 95934,
+      "unsupported": {},
+      "selected": "full",
+      "baseline": {
+        "settled": 50,
+        "wins": 3,
+        "clears": 46,
+        "damage": 29500,
+        "main2": 34
+      },
+      "prior": {
+        "settled": 50,
+        "wins": 4,
+        "clears": 71,
+        "damage": 73000,
+        "main2": 46
+      },
+      "trained": {
+        "settled": 44,
+        "wins": 7,
+        "clears": 63,
+        "damage": 81750,
+        "main2": 37
+      },
+      "gain": {
+        "baseline": [
+          29,
+          10
+        ],
+        "prior": [
+          19,
+          13
+        ]
+      },
+      "promoted": false
+    },
+    "model_sha256": "5a14c677dd2fe68f597c155184801746a64f2bcd2cfff627c908782f2d6892e5",
+    "holdout": {
+      "all": {
+        "cases": 50,
+        "lethal_reference": 13,
+        "baseline": {
+          "settled": 50,
+          "wins": 3,
+          "reference_wins": 3,
+          "clears": 46,
+          "damage": 29500,
+          "main2": 34
+        },
+        "prior": {
+          "settled": 50,
+          "wins": 4,
+          "reference_wins": 4,
+          "clears": 71,
+          "damage": 73000,
+          "main2": 46
+        },
+        "trained": {
+          "settled": 44,
+          "wins": 7,
+          "reference_wins": 6,
+          "clears": 63,
+          "damage": 81750,
+          "main2": 37
+        },
+        "compared_to_baseline": {
+          "better": 29,
+          "worse": 10,
+          "tied": 11
+        },
+        "compared_to_prior": {
+          "better": 19,
+          "worse": 13,
+          "tied": 18
+        }
+      },
+      "mirror": {
+        "cases": 25,
+        "lethal_reference": 7,
+        "baseline": {
+          "settled": 25,
+          "wins": 2,
+          "reference_wins": 2,
+          "clears": 18,
+          "damage": 19300,
+          "main2": 13
+        },
+        "prior": {
+          "settled": 25,
+          "wins": 1,
+          "reference_wins": 1,
+          "clears": 28,
+          "damage": 33050,
+          "main2": 24
+        },
+        "trained": {
+          "settled": 25,
+          "wins": 3,
+          "reference_wins": 3,
+          "clears": 31,
+          "damage": 40650,
+          "main2": 22
+        },
+        "compared_to_baseline": {
+          "better": 15,
+          "worse": 2,
+          "tied": 8
+        },
+        "compared_to_prior": {
+          "better": 11,
+          "worse": 4,
+          "tied": 10
+        }
+      },
+      "twins": {
+        "cases": 25,
+        "lethal_reference": 6,
+        "baseline": {
+          "settled": 25,
+          "wins": 1,
+          "reference_wins": 1,
+          "clears": 28,
+          "damage": 10200,
+          "main2": 21
+        },
+        "prior": {
+          "settled": 25,
+          "wins": 3,
+          "reference_wins": 3,
+          "clears": 43,
+          "damage": 39950,
+          "main2": 22
+        },
+        "trained": {
+          "settled": 19,
+          "wins": 4,
+          "reference_wins": 3,
+          "clears": 32,
+          "damage": 41100,
+          "main2": 15
+        },
+        "compared_to_baseline": {
+          "better": 14,
+          "worse": 8,
+          "tied": 3
+        },
+        "compared_to_prior": {
+          "better": 8,
+          "worse": 9,
+          "tied": 8
+        }
+      }
+    }
+  },
+  "generic": {
+    "windows": {
+      "status": "completed",
+      "genericBoards": 26,
+      "started": "2026-11-26T19:00:16.583Z",
+      "deadline": "2026-11-26T19:19:04.583Z",
+      "cases": 926,
+      "attempts": 92531,
+      "settled": 91992,
+      "wins": 4836,
+      "main2": 87145,
+      "interrupted": 90309,
+      "effects": 5843,
+      "verified": 922,
+      "pairs": 34544,
+      "unsupported": {},
+      "selected": "medium",
+      "baseline": {
+        "settled": 50,
+        "wins": 2,
+        "clears": 39,
+        "damage": 22500,
+        "main2": 31
+      },
+      "prior": {
+        "settled": 50,
+        "wins": 4,
+        "clears": 65,
+        "damage": 83275,
+        "main2": 46
+      },
+      "trained": {
+        "settled": 50,
+        "wins": 5,
+        "clears": 58,
+        "damage": 67950,
+        "main2": 45
+      },
+      "gain": {
+        "baseline": [
+          23,
+          6
+        ],
+        "prior": [
+          7,
+          15
+        ]
+      },
+      "promoted": false
+    },
+    "model_sha256": "92b4e56ae9c9927bceb6051f510fb1189b256a64bb071a26ad8ae03809894606",
+    "holdout": {
+      "all": {
+        "cases": 50,
+        "lethal_reference": 14,
+        "baseline": {
+          "settled": 50,
+          "wins": 2,
+          "reference_wins": 2,
+          "clears": 39,
+          "damage": 22500,
+          "main2": 31
+        },
+        "prior": {
+          "settled": 50,
+          "wins": 4,
+          "reference_wins": 3,
+          "clears": 65,
+          "damage": 83275,
+          "main2": 46
+        },
+        "trained": {
+          "settled": 50,
+          "wins": 5,
+          "reference_wins": 4,
+          "clears": 58,
+          "damage": 67950,
+          "main2": 45
+        },
+        "compared_to_baseline": {
+          "better": 23,
+          "worse": 6,
+          "tied": 21
+        },
+        "compared_to_prior": {
+          "better": 7,
+          "worse": 15,
+          "tied": 28
+        }
+      },
+      "generic": {
+        "cases": 29,
+        "lethal_reference": 6,
+        "baseline": {
+          "settled": 29,
+          "wins": 1,
+          "reference_wins": 1,
+          "clears": 24,
+          "damage": 9600,
+          "main2": 17
+        },
+        "prior": {
+          "settled": 29,
+          "wins": 2,
+          "reference_wins": 1,
+          "clears": 37,
+          "damage": 39775,
+          "main2": 27
+        },
+        "trained": {
+          "settled": 29,
+          "wins": 2,
+          "reference_wins": 1,
+          "clears": 33,
+          "damage": 31700,
+          "main2": 27
+        },
+        "compared_to_baseline": {
+          "better": 12,
+          "worse": 4,
+          "tied": 13
+        },
+        "compared_to_prior": {
+          "better": 4,
+          "worse": 9,
+          "tied": 16
+        }
+      },
+      "mirror": {
+        "cases": 10,
+        "lethal_reference": 3,
+        "baseline": {
+          "settled": 10,
+          "wins": 0,
+          "reference_wins": 0,
+          "clears": 5,
+          "damage": 4200,
+          "main2": 5
+        },
+        "prior": {
+          "settled": 10,
+          "wins": 0,
+          "reference_wins": 0,
+          "clears": 11,
+          "damage": 15400,
+          "main2": 10
+        },
+        "trained": {
+          "settled": 10,
+          "wins": 0,
+          "reference_wins": 0,
+          "clears": 11,
+          "damage": 12750,
+          "main2": 10
+        },
+        "compared_to_baseline": {
+          "better": 5,
+          "worse": 1,
+          "tied": 4
+        },
+        "compared_to_prior": {
+          "better": 2,
+          "worse": 2,
+          "tied": 6
+        }
+      },
+      "twins": {
+        "cases": 11,
+        "lethal_reference": 5,
+        "baseline": {
+          "settled": 11,
+          "wins": 1,
+          "reference_wins": 1,
+          "clears": 10,
+          "damage": 8700,
+          "main2": 9
+        },
+        "prior": {
+          "settled": 11,
+          "wins": 2,
+          "reference_wins": 2,
+          "clears": 17,
+          "damage": 28100,
+          "main2": 9
+        },
+        "trained": {
+          "settled": 11,
+          "wins": 3,
+          "reference_wins": 3,
+          "clears": 14,
+          "damage": 23500,
+          "main2": 8
+        },
+        "compared_to_baseline": {
+          "better": 6,
+          "worse": 1,
+          "tied": 4
+        },
+        "compared_to_prior": {
+          "better": 1,
+          "worse": 4,
+          "tied": 6
+        }
+      }
+    }
+  }
+}

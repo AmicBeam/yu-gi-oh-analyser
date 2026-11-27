@@ -1,0 +1,6 @@
+{
+  "reason": "user-ended-after-current-batch",
+  "checkpoint": 160,
+  "finished_shards": 162,
+  "elapsed_seconds": 204.7
+}

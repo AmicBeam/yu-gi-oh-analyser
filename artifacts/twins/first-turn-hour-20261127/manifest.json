@@ -1,0 +1,13 @@
+{
+  "seed": 2026112799,
+  "seconds": 3600,
+  "jobs": 8,
+  "attempts": 300,
+  "search_ms": 9000,
+  "cards_sha256": "979b7aaa6356bd7bd8f1126c97394073723dbcda89164901c5dc4eb6391dee53",
+  "windbot_sha256": "a66dbc6cb2cb58cd3ab67a12d62f4518b6f4f882aafa20dc585330f7dfb2e576",
+  "scorer_sha256": "5cff134e2d77a08677010df7c7857fb76805fc1c7a227b29be3c919b2e207363",
+  "deck_sha256": "8daf6d49405065d7cec77abf7179f3c967ef609af27b419c9649c70b17296995",
+  "search_sha256": "a76defd207ecf606b959153a1f3c1ac5c38655e2ee39aeec17e777ebddeb8f0f",
+  "pressure_sha256": "7485ace74bfc01b0d889ec6689f5c0119d66748bb565bd4b2a3d5ce222e33731"
+}

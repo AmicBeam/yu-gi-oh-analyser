@@ -5,6 +5,16 @@
       "deck": "Twins"
     },
     {
+      "name": "双子2",
+      "deck": "Twins2",
+      "hidden": true
+    },
+    {
+      "name": "大贤者",
+      "deck": "Magistus",
+      "hidden": true
+    },
+    {
       "name": "亚马逊",
       "deck": "Amazoness",
       "hidden": true

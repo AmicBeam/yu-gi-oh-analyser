@@ -1,0 +1,229 @@
+{
+  "pool": {
+    "joined": "双子",
+    "command": "/ai",
+    "checks": []
+  },
+  "named": {
+    "joined": "大贤者",
+    "ended": true,
+    "botSeat": 0,
+    "checks": [
+      [
+        "FirstTurnResult",
+        {
+          "board": [
+            37260677,
+            27548199,
+            27519978
+          ],
+          "lost": 3,
+          "draws": 0
+        }
+      ]
+    ]
+  },
+  "nibiru": {
+    "joined": "大贤者",
+    "ended": true,
+    "botSeat": 0,
+    "checks": [
+      [
+        "NibiruStopped",
+        5
+      ],
+      [
+        "FirstTurnResult",
+        {
+          "board": [
+            37260677,
+            27548199,
+            27519978
+          ],
+          "lost": 3,
+          "draws": 0
+        }
+      ]
+    ]
+  },
+  "second": {
+    "joined": "大贤者",
+    "ended": true,
+    "botSeat": 1,
+    "checks": [
+      [
+        "FirstTurnResult",
+        {
+          "board": [
+            37260677,
+            27548199,
+            27519978
+          ],
+          "lost": 3,
+          "draws": 0
+        }
+      ]
+    ]
+  },
+  "maxx": {
+    "joined": "大贤者",
+    "ended": true,
+    "botSeat": 0,
+    "checks": [
+      [
+        "FirstTurnResult",
+        {
+          "board": [
+            27548199
+          ],
+          "lost": 0,
+          "draws": 2
+        }
+      ]
+    ]
+  },
+  "unguide": {
+    "joined": "大贤者",
+    "ended": true,
+    "botSeat": 0,
+    "checks": [
+      [
+        "FirstTurnResult",
+        {
+          "board": [
+            37260677,
+            36099130,
+            27548199
+          ],
+          "lost": 0,
+          "draws": 0
+        }
+      ]
+    ]
+  },
+  "suite": {
+    "responses": 672,
+    "max_decision_ms": 1,
+    "ranked": 0,
+    "errors": []
+  },
+  "trained-fallback": {
+    "responses": 167,
+    "max_decision_ms": 1,
+    "ranked": 30,
+    "errors": []
+  },
+  "online_named": {
+    "port": 7911,
+    "joined": "大贤者",
+    "ended": true,
+    "hidden": true,
+    "checks": [
+      [
+        "FirstTurnResult",
+        {
+          "board": [
+            37260677,
+            27548199,
+            22623509,
+            66532962
+          ],
+          "lost": 0,
+          "draws": 0
+        }
+      ]
+    ]
+  },
+  "position_policy": {
+    "first_main": {
+      "22623509": 4,
+      "66532962": 4,
+      "37260677": 4,
+      "27548199": 1
+    },
+    "token_actual_face_up_defense": true,
+    "token_prompt": {
+      "event": "summon-position",
+      "code": 27204312,
+      "legal": 5,
+      "position": 4,
+      "turn": 1,
+      "phase": 4,
+      "ownTurn": false
+    },
+    "checks": {
+      "named": [
+        [
+          "FirstTurnResult",
+          {
+            "board": [
+              37260677,
+              27548199,
+              27519978
+            ],
+            "lost": 3,
+            "draws": 0
+          }
+        ]
+      ],
+      "nibiru": [
+        [
+          "NibiruStopped",
+          5
+        ],
+        [
+          "FirstTurnResult",
+          {
+            "board": [
+              37260677,
+              27548199,
+              27519978
+            ],
+            "lost": 3,
+            "draws": 0
+          }
+        ]
+      ],
+      "second": [
+        [
+          "FirstTurnResult",
+          {
+            "board": [
+              37260677,
+              27548199,
+              27519978
+            ],
+            "lost": 3,
+            "draws": 0
+          }
+        ]
+      ],
+      "maxx": [
+        [
+          "FirstTurnResult",
+          {
+            "board": [
+              27548199
+            ],
+            "lost": 0,
+            "draws": 2
+          }
+        ]
+      ]
+    },
+    "online_named": {
+      "port": 7911,
+      "joined": "大贤者",
+      "ended": true,
+      "turn_result": {
+        "board": [
+          37260677,
+          100274004,
+          66532962
+        ],
+        "lost": 3,
+        "draws": 0
+      }
+    }
+  }
+}

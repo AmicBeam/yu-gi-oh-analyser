@@ -3,12 +3,18 @@ const fs = require('node:fs');
 const net = require('node:net');
 const crypto = require('node:crypto');
 const P = require('ygopro-msg-encode');
+const { belle, sunnyRevival } = require('./twins-interference.cjs');
+const { MixedInterference } = require('./twins-mixed-interference.cjs');
 const Deck = require('ygopro-deck-encode').default;
 
 const [port, deckFile] = process.argv.slice(2);
 const deckInput = JSON.parse(fs.readFileSync(deckFile));
 const deck = new Deck(Array.isArray(deckInput) ? { main: deckInput, extra: [], side: [] } : deckInput);
 const second = process.env.TWINS_GO_SECOND === '1';
+const requestedBot = process.env.TWINS_BOT_NAME || '双子';
+const bareCommand = process.env.TWINS_BOT_BARE_COMMAND === '1';
+const aiCommand = process.env.TWINS_BOT_COMMAND || '/AI';
+assert(/^\/ai$/i.test(aiCommand));
 const opposingMonster = Number(process.env.TWINS_OPPONENT_MONSTER || 0);
 const checkOpponentTurn = process.env.TWINS_CHECK_OPPONENT_TURN === '1';
 const testMonster = 7572887; // D.D. Warrior Lady supplies a target for removal or effect negation.
@@ -19,7 +25,7 @@ let summoned = false;
 let ashUsed = false;
 const ashTarget = Number(process.env.TWINS_ASH_TARGET || 0);
 const interference = process.env.TWINS_INTERFERENCE;
-const handTraps = { nibiru: 27204311, ash: 14558128, dragon: 70088809, droll: 94145022, ogre: 59438930, imperm: 10045474 };
+const handTraps = { nibiru: 27204311, ash: 14558128, dragon: 70088809, droll: 94145022, ogre: 59438930, imperm: 10045474, belle };
 const master = 72444406;
 let interferenceUsed = false;
 let interferenceTarget = 0;
@@ -35,9 +41,18 @@ let turn = 0;
 const activity = new Set(['Summoning', 'SpSummoning', 'Chaining', 'ChainSolved', 'ChainEnd', 'Move', 'Draw']);
 const suffix = crypto.randomBytes(4).toString('hex');
 const wire = net.connect({ host: '127.0.0.1', port: Number(port) });
-const room = (second ? 'NF,NS,LP50000' : 'NF,NS') + '#Twins-' + suffix;
+const testLP = process.env.TWINS_TEST_LP || (second ? '50000' : '');
+assert(/^[0-9]*$/.test(testLP));
+const roomOptions = 'NF' + (process.env.TWINS_TEST_SHUFFLE === '1' ? '' : ',NS')
+    + (testLP ? ',LP' + testLP : '');
+// The join packet can carry only 20 characters. Keep enough of the random
+// suffix to create a fresh room when a test retries the coin toss.
+const roomPrefix = roomOptions + (roomOptions.length <= 9 ? '#Twins-' : '#T-');
+const room = roomPrefix + suffix.slice(0, 20 - roomPrefix.length);
 const trace = [];
 const monsters = new Map();
+const mixedMode = process.env.TWINS_MIXED_PRESSURE;
+const mixed = mixedMode ? new MixedInterference(trace, monsters, mixedMode === 'hit') : null;
 let host, ready, started, ended, won, error;
 let rps = Number(process.env.TWINS_RPS || '0');
 let buffer = Buffer.alloc(0);
@@ -56,6 +71,7 @@ function chooseHandTrap(game, lastChain) {
         ash: ownEffect && code === 2463794,
         dragon: ownEffect && code === 6636319,
         droll: true,
+        belle: sunnyRevival(lastChain),
         ogre: ownEffect && code === 4731783,
         imperm: ownEffect && [9205573, 9205574, 36609518, 36609519, 25153, 49867899, 24269961].includes(code),
     }[interference];
@@ -64,7 +80,7 @@ function chooseHandTrap(game, lastChain) {
     const chain = game.chains.find(choice => choice.code === handTraps[interference]);
     if (chain) {
         interferenceUsed = true;
-        interferenceTarget = ['ash', 'dragon', 'ogre', 'imperm'].includes(interference) ? code : 0;
+        interferenceTarget = ['ash', 'dragon', 'ogre', 'imperm', 'belle'].includes(interference) ? code : 0;
         trace.push(['Interference', interference, chain.code, interferenceTarget, ownSummons]);
     }
     return chain;
@@ -123,7 +139,7 @@ wire.on('data', bytes => {
             const message = new P[type]().fromFullPayload(packet);
             if (type === 'YGOProStocErrorMsg') throw Error(JSON.stringify(message));
             if (type === 'YGOProStocTypeChange') host = message.isHost && message.playerPosition === 0;
-            if (type === 'YGOProStocHsPlayerEnter' && message.pos === 1) ready = message.name === '双子';
+            if (type === 'YGOProStocHsPlayerEnter' && message.pos === 1) ready = message.name === requestedBot;
             if (type === 'YGOProStocSelectHand') {
                 const choices = [P.HandResult.SCISSORS, P.HandResult.ROCK, P.HandResult.PAPER];
                 send('YGOProCtosHandResult', { res: choices[rps++ % choices.length] });
@@ -149,8 +165,16 @@ wire.on('data', bytes => {
             else if (['ChainSolving', 'ChainSolved', 'ChainDisabled', 'ChainNegated', 'ChainEnd'].includes(name))
                 trace.push([name, game.chainCount]);
             else if (['NewTurn', 'Summoning', 'SpSummoning', 'Draw', 'Retry', 'Attack', 'Damage', 'Win'].includes(name))
-                trace.push([name, game.code, game.player]);
-            if (name === 'NewTurn') turn++;
+                trace.push([name, game.code, game.player, ...(mixed && name === 'Draw'
+                    ? [game.cards?.length ?? game.codes?.length ?? 1] : [])]);
+            if (mixed && name === 'Draw' && turn === 0 && game.player === 1)
+                trace.push(['MixedOpening', game.cards]);
+            if (mixed && ['Chaining', 'ChainSolving', 'ChainSolved', 'ChainEnd'].includes(name))
+                mixed.observe(trace.at(-1));
+            if (name === 'NewTurn') {
+                turn++;
+                if (mixed && turn === 2) ended = true;
+            }
             if (name === 'NewPhase' || activity.has(name) || name === 'Win') {
                 const now = performance.now();
                 if (lastMainActivity != null)
@@ -173,7 +197,11 @@ wire.on('data', bytes => {
             }
             if (name === 'Move') {
                 trace.push([name, game.code, game.previous.location, game.current.location, game.current.sequence,
-                            game.previous.controller, game.previous.sequence, game.current.controller]);
+                            game.previous.controller, game.previous.sequence, game.current.controller,
+                            ...(mixed ? [game.current.position] : [])]);
+                if (mixed?.solving === 30316053 && game.previous.controller === 0 && game.current.location === 16)
+                    pendingSummons = 0;
+                mixed?.observe(trace.at(-1));
                 if (game.previous.location === 4)
                     monsters.delete(game.previous.controller * 8 + game.previous.sequence);
                 if (game.current.location === 4 && game.code)
@@ -188,8 +216,18 @@ wire.on('data', bytes => {
                     && game.chains.find(chain => chain.code === master);
                 if (masterEffect) masterStarted = true;
                 const selected = game.chains.find(chain => chain.forced)
-                    || ash || masterEffect || chooseHandTrap(game, lastChain);
+                    || ash || masterEffect || chooseHandTrap(game, lastChain)
+                    || (mixed && turn === 1 ? mixed.choose(game, phase, ownSummons, pendingSummons) : undefined);
                 send('YGOProCtosResponse', { response: selected ? game.prepareResponse(selected) : game.prepareResponse() });
+            }
+            if (mixed && turn === 1) {
+                let response;
+                if (name === 'SelectCard' || name === 'SelectUnselectCard')
+                    response = mixed.chooseCards(game, name === 'SelectUnselectCard');
+                if (name === 'SelectOption') response = mixed.option(game);
+                if (name === 'SelectEffectYn' || name === 'SelectYesNo') response = game.prepareResponse(true);
+                if (response !== undefined)
+                    send('YGOProCtosResponse', { response });
             }
             if (interferenceUsed && turn === 1 && name === 'SelectCard')
                 send('YGOProCtosResponse', { response: game.prepareResponse(interferenceCards(game)) });
@@ -254,7 +292,7 @@ async function until(label, condition) {
 
 (async () => {
     await until('lobby', () => host);
-    send('YGOProCtosChat', { msg: '/AI 双子' });
+    send('YGOProCtosChat', { msg: bareCommand ? aiCommand : aiCommand + ' ' + requestedBot });
     await until('bot joined', () => ready);
     send('YGOProCtosUpdateDeck', { deck });
     send('YGOProCtosHsReady');
@@ -263,6 +301,8 @@ async function until(label, condition) {
     await until('duel started', () => started);
     await until('bot finished its turn', () => ended || won);
     if (!won) {
+        // At the turn boundary, let the bot consume NewTurn and log its settled board.
+        if (mixed) await new Promise(resolve => setTimeout(resolve, 250));
         send('YGOProCtosSurrender');
         await until('duel ended', () => won);
     }

@@ -14,7 +14,7 @@ namespace WindBot.Game.AI.Decks
     public partial class TwinsExecutor
     {
         private const int TableInertDiscard = -2;
-        private const int TableVersion = 2;
+        private const int TableVersion = 3;
         private static readonly bool OpeningTableEnabled = Environment.GetEnvironmentVariable("TWINS_PLAN_OPENING_TABLE") == "1";
         private static readonly Lazy<Dictionary<string, TablePlan>> OpeningTable =
             new Lazy<Dictionary<string, TablePlan>>(() => ReadOpeningTable(Path.Combine("Decks", "AI_Twins.plan.jsonl")));
@@ -239,6 +239,7 @@ namespace WindBot.Game.AI.Decks
             if (start.DrawEffects.Active || start.Sealing)
                 return null;
 
+            deadline = BoardSearchDeadline(deadline);
             firstMove = firstMove ?? PlanOffered;
             var tactics = prioritizeExchanges ? ResourceTactics.Concat(ExtensionTactics).ToArray() : ResourceTactics;
             var frontier = new List<PlanPosition> { start };
@@ -246,7 +247,9 @@ namespace WindBot.Game.AI.Decks
             int evaluations = 0;
             start.Score = EndBoardScore(start, true);
             var best = start;
-            while (frontier.Count != 0 && timer.ElapsedMilliseconds < deadline)
+            // With a room clock, bound this beam by rounds as in tactical continuation.
+            int roundLimit = RoomClockOnlyForBoardSearch ? 36 : int.MaxValue;
+            for (int round = 0; round < roundLimit && frontier.Count != 0 && timer.ElapsedMilliseconds < deadline; round++)
             {
                 var successors = new List<PlanPosition>();
                 foreach (var position in frontier)
@@ -261,7 +264,7 @@ namespace WindBot.Game.AI.Decks
                         evaluations++;
                         next.Score = EndBoardScore(next, true);
                         next.Potential = ContinuationRank(next)
-                            + (prioritizeExchanges ? ResourceExchangeRank(next) : next.Score);
+                            + (prioritizeExchanges ? ResourceExchangeRank(next) : next.Score / ScoreUnitsPerTenth);
                         successors.Add(next);
                         if (next.Score > best.Score || next.Score == best.Score && PreferEnd(next, best))
                             best = next;
@@ -803,6 +806,7 @@ namespace WindBot.Game.AI.Decks
         private PlanResult TryTacticalContinuation(PlanPosition start, Stopwatch timer, int deadline,
             Func<PlanMove, bool> firstMove = null)
         {
+            deadline = BoardSearchDeadline(deadline);
             if (start.DrawEffects.Active || start.Sealing || timer.ElapsedMilliseconds >= deadline)
                 return null;
             firstMove = firstMove ?? PlanOffered;
@@ -921,7 +925,7 @@ namespace WindBot.Game.AI.Decks
                     using (var row = new MemoryStream(Encoding.UTF8.GetBytes(line)))
                     {
                         var entry = (TablePlan)serializer.ReadObject(row);
-                        if (entry.Version != TableVersion || string.IsNullOrEmpty(entry.Key)
+                        if ((entry.Version != 2 && entry.Version != TableVersion) || string.IsNullOrEmpty(entry.Key)
                             || entry.Score < 0 || entry.ReturnZone < -1 || entry.ReturnZone >= 5
                             || entry.Moves == null || entry.Moves.Count == 0 || entry.Moves.Count > 52
                             || entry.Moves.Any(move => !ValidTableMove(move)))
@@ -960,16 +964,16 @@ namespace WindBot.Game.AI.Decks
             if (table.Count == 0 || !table.TryGetValue(TableKey(position, recovering), out TablePlan entry)
                 || !PlanOffered(entry.Moves[0]))
                 return false;
-            // Recompute slot-sensitive Abao scores and any draw whose Sweet risk can change along the line.
+            // Replay legacy entries and refresh scores affected by Abao slots or Sweet draws.
             bool canDrawSweet = entry.Moves.Any(move => move.Type == ExecutorType.Activate
                     && move.Card == EvilKiSikil && move.Effect == 0)
                 && (position.Deck.Contains(Sweet) || entry.Moves.Any(move => move.Type == ExecutorType.Activate
                     && move.Card == NightPhoto && move.Effect == 0 && move.Target == Sweet));
-            if (position.Has(Abao) || position.ReturningAbao != 0
+            if (entry.Version != TableVersion || !UsesUnifiedBoardWeights || position.Has(Abao) || position.ReturningAbao != 0
                 || entry.Moves.Any(move => move.Card == Abao || move.Target == Abao || move.SummonedIds?.Contains(Abao) == true)
                 || canDrawSweet)
             {
-                int deadline = (int)Math.Min(timer.ElapsedMilliseconds + 100, 500);
+                int deadline = BoardSearchDeadline((int)Math.Min(timer.ElapsedMilliseconds + 100, 500));
                 if (timer.ElapsedMilliseconds >= deadline)
                     return false;
                 var firstMoves = ComboSuccessors(position).Where(next => MatchesCachedMove(next.Move, entry.Moves[0])).ToList();

@@ -58,60 +58,63 @@ internal static class TwinsPlannerRules
             positionType.GetField("Field").SetValue(position, field);
             return (int)score.Invoke(executor, new object[] { position, true });
         };
-        Check(terminal(lone) == 20, "Gryphon with no opponent arrows scores 2");
+        Check(terminal(lone) == 2000, "Gryphon with no opponent arrows scores 2");
         int[] loneAbao = { Abao, 0, 0, 0, 0, 0, 0 };
         Check(terminal(loneAbao) == 0, "Abao cannot destroy without a discard");
         positionType.GetField("Hand").SetValue(position, new List<int> { 23434538 });
-        Check(terminal(loneAbao) == 10, "Abao earns one interaction point with a hand trap as its only discard");
+        Check(terminal(loneAbao) == 1000, "Abao earns one interaction point with a hand trap as its only discard");
         positionType.GetField("Hand").SetValue(position, new List<int>());
-        Check(terminal(new[] { 0, 0, Gryphon, 0, 0, Abao, 0 }) == 23, "unopened occupied Extra Monster Zone");
+        Check(terminal(new[] { 0, 0, Gryphon, 0, 0, Abao, 0 }) == 2300, "unopened occupied Extra Monster Zone");
         Check(terminal(new[] { 0, 0, 0, 0, 0, Gryphon, 0 }) == 0, "arrow to opponent turns off lock award");
         positionType.GetField("Equipment").SetValue(position, 2);
-        Check(terminal(oneWay) == 30 && terminal(unlinked) == 20, "locked Desirae provides no interruption");
+        Check(terminal(oneWay) == 3050 && terminal(unlinked) == 2000, "locked Desirae provides no interruption");
         int[] linkedExtra = { Abao, Gryphon, 0, 0, 0, Desirae, 0 };
         int[] lockedExtra = { 0, 0, Gryphon, 0, 0, Desirae, 0 };
-        Check(terminal(linkedExtra) == 33 && terminal(lockedExtra) == 23,
+        Check(terminal(linkedExtra) == 3350 && terminal(lockedExtra) == 2300,
             "Desirae in the Extra Monster Zone counts only if linked under Gryphon");
         const int caesar = 79559912;
-        Check(terminal(new[] { Abao, Gryphon, 0, 0, 0, caesar, 0 }) == 36,
+        Check(terminal(new[] { Abao, Gryphon, 0, 0, 0, caesar, 0 }) == 3600,
             "Caesar in the Extra Monster Zone keeps its interruption when linked");
         const int nightfall = 25154, deal = 6636319, scout = 25152;
         int[] deferredLock = { 0, Gryphon, 0, 0, 0, nightfall, 0 };
         positionType.GetField("Grave").SetValue(position, new List<int> { scout });
         Check(terminal(deferredLock) == 0, "Nightfall in the Extra Monster Zone opens the opponent's arrow");
         positionType.GetField("Extra").SetValue(position, new List<int> { deal });
-        Check(terminal(deferredLock) == 23, "Nightfall can replace itself with Deal to close the arrow");
+        Check(terminal(deferredLock) == 2300, "Nightfall can replace itself with Deal to close the arrow");
+        positionType.GetField("Extra").SetValue(position, new List<int> { Heist });
+        Check(terminal(new[] { nightfall, 0, 0, 0, 0, 0, 0 }) == 735,
+            "Heist summoned by Nightfall uses the exact delayed three-color negate score");
         positionType.GetField("Extra").SetValue(position, new List<int>());
         positionType.GetField("Grave").SetValue(position, new List<int> { Gryphon });
         positionType.GetField("Hand").SetValue(position, new List<int> { 27204311 });
-        Check(terminal(new[] { Abao, 0, 0, 0, 0, 0, 0 }) == 20,
+        Check(terminal(new[] { Abao, 0, 0, 0, 0, 0, 0 }) == 2000,
             "Gryphon revived by Abao scores its normal locked board");
         positionType.GetField("Hand").SetValue(position, new List<int> { 37582948 });
-        Check(terminal(new[] { Abao, 0, 0, 0, 0, 0, 0 }) == 20,
+        Check(terminal(new[] { Abao, 0, 0, 0, 0, 0, 0 }) == 2000,
             "Abao cannot count both its destroy and revival branches");
         positionType.GetField("Set").SetValue(position, 3);
         positionType.GetField("Extra").SetValue(position, new List<int> { deal });
         positionType.GetField("Grave").SetValue(position, new List<int> { Gryphon, scout, 9205573, 36609518 });
         int[] newYearBoard = { Abao, 0, 0, 0, 0, 0, nightfall };
-        Check(terminal(newYearBoard) == 47, "Deal and Challenge can enable Blue alongside the revived Gryphon");
+        Check(terminal(newYearBoard) == 5000, "Deal and Challenge can enable Blue alongside the revived Gryphon");
         ((List<int>)positionType.GetField("Grave").GetValue(position)).Add(25150);
-        Check(terminal(newYearBoard) == 51,
+        Check(terminal(newYearBoard) == 5500,
             "Challenge and New Year add Red's draw alongside the revived Gryphon");
         positionType.GetField("Set").SetValue(position, 1);
         positionType.GetField("Extra").SetValue(position, new List<int>());
         positionType.GetField("Grave").SetValue(position, new List<int> { Heist });
         int[] heistAndTrade = { Abao, Gryphon, 36609518, 0, 0, Desirae, 0 };
         positionType.GetField("Hand").SetValue(position, new List<int> { 27204311 });
-        Check(terminal(heistAndTrade) == 63,
-            "Abao can revive linked Heist and Disconnect can trade Desirae");
+        Check(terminal(heistAndTrade) == 6250,
+            "Disconnect can trade Desirae while Abao has an independent destruction");
         positionType.GetField("Hand").SetValue(position, new List<int> { 37582948 });
-        Check(terminal(heistAndTrade) == 63, "Abao's Heist revival replaces its destruction point");
+        Check(terminal(heistAndTrade) == 6250, "Abao chooses direct destruction over its lower-scoring Heist revive");
         positionType.GetField("Set").SetValue(position, 0);
         positionType.GetField("Extra").SetValue(position, new List<int>());
         const int blue = 36609518;
         const int frost = 54257392, photo = 25151;
         positionType.GetField("Grave").SetValue(position, new List<int> { frost });
-        Check(terminal(new[] { blue, 0, 0, 0, 0, 0, 0 }) == 2 && terminal(new int[7]) == 0,
+        Check(terminal(new[] { blue, 0, 0, 0, 0, 0, 0 }) == 250 && terminal(new int[7]) == 0,
             "Frost's conditional graveyard draw scores half a draw when an Evil Twin is on the field");
         positionType.GetField("Field").SetValue(position, new[] { 0, 0, 0, 0, 0, Abao, 0 });
         positionType.GetField("Grave").SetValue(position, new List<int> { blue });
@@ -308,7 +311,7 @@ internal static class TwinsPlannerRules
         var sixth = ((IEnumerable)extraMoves.Invoke(executor, new[] { position, requiem })).Cast<object>().First();
         Check((bool)earlyRequiem.GetValue(fifth) && !(bool)earlyRequiem.GetValue(sixth)
             && (int)score.Invoke(executor, new[] { fifth, (object)true })
-                == (int)score.Invoke(executor, new[] { sixth, (object)true }) + 10,
+                == (int)score.Invoke(executor, new[] { sixth, (object)true }) + 1000,
             "Requiem and live New Year earn one point through the fifth summon");
         Check(!(bool)hasDefense.Invoke(null, new[] { requiemAlone })
             && !(bool)hasDefense.Invoke(null, new[] { sixth })
@@ -364,7 +367,7 @@ internal static class TwinsPlannerRules
         Check(!(bool)hasDefense.Invoke(null, new[] { position }), "Photo drawn after the window is too late");
         positionType.GetField("PhotoAtNibiruWindow").SetValue(fifth, true);
         Check((int)score.Invoke(executor, new[] { fifth, (object)true })
-            == (int)score.Invoke(executor, new[] { sixth, (object)true }) + 10,
+            == (int)score.Invoke(executor, new[] { sixth, (object)true }) + 1000,
             "Photo and early Requiem share one defense point");
         var compareDefense = type.GetMethod("CompareNibiruDefense", BindingFlags.Static | BindingFlags.NonPublic);
         var earlyYama = nextPosition.Invoke(fifth, new object[] { null });
@@ -530,7 +533,7 @@ internal static class TwinsPlannerRules
         var redPlan = tryTactic.Invoke(executor, new object[] {
             redWithHeldBlues, System.Diagnostics.Stopwatch.StartNew(), 2000, legalMove
         });
-        Check(redPlan != null && (int)redPlan.GetType().GetField("Score").GetValue(redPlan) >= 107,
+        Check(redPlan != null && (int)redPlan.GetType().GetField("Score").GetValue(redPlan) >= 10835,
             "the starter tactics reach the full board with the remaining two Blue Twins in hand");
         var resumedPlan = tryTactic.Invoke(executor, new object[] {
             afterSunny, System.Diagnostics.Stopwatch.StartNew(), 2000, legalMove
@@ -630,7 +633,7 @@ internal static class TwinsPlannerRules
         positionType.GetField("Draws").SetValue(position, 0);
         positionType.GetField("Grave").SetValue(position, new List<int> { scout });
         positionType.GetField("Extra").SetValue(position, new List<int> { Heist });
-        Check(terminal(deferredLock) == 20, "Heist summoned in the draw phase gives the lock but no disruption point");
+        Check(terminal(deferredLock) == 2000, "Heist summoned in the draw phase gives the lock but no disruption point");
         negateDuel.CurrentChain.Clear();
         negateDuel.CurrentChainInfo.Clear();
         negateDuel.Fields[1].MonsterZone[2] = null;
@@ -692,9 +695,9 @@ internal static class TwinsPlannerRules
         positionType.GetField("Extra").SetValue(position, new List<int>());
         positionType.GetField("Set").SetValue(position, 1);
         Check(terminal(new[] { smallBlue, 0, 0, 0, 0, 0, 0 }) == 0, "Disconnect requires an Evil Twin");
-        Check(terminal(new[] { blue, 0, 0, 0, 0, 0, 0 }) == 10, "a live Disconnect earns one point");
+        Check(terminal(new[] { blue, 0, 0, 0, 0, 0, 0 }) == 1400, "Disconnect with Blue can negate and destroy");
         positionType.GetField("OpponentDraws").SetValue(position, 1);
-        Check(terminal(new[] { blue, 0, 0, 0, 0, 0, 0 }) == 0, "one opponent draw deducts a full interruption point");
+        Check(terminal(new[] { blue, 0, 0, 0, 0, 0, 0 }) == 400, "one opponent draw deducts a full interruption point");
 
         var moveType = type.GetNestedType("PlanMove", BindingFlags.NonPublic);
         var resultType = type.GetNestedType("PlanResult", BindingFlags.NonPublic);
@@ -729,7 +732,7 @@ internal static class TwinsPlannerRules
         var boardPlanField = type.GetField("_boardPlan", Private);
         boardPlanField.SetValue(drawExecutor, drawPlan);
         var upgrade = drawPlanner.Invoke(drawExecutor, new[] { afterDraw, System.Diagnostics.Stopwatch.StartNew() });
-        Check(upgrade != null && (int)resultType.GetField("Score").GetValue(upgrade) == 14,
+        Check(upgrade != null && (int)resultType.GetField("Score").GetValue(upgrade) == 1900,
             "a drawn Disconnect can add a scored interruption with an Evil Twin in play");
         boardPlanField.SetValue(drawExecutor, upgrade);
         Check(drawPlanner.Invoke(drawExecutor, new[] { afterDraw, System.Diagnostics.Stopwatch.StartNew() }) == null,
@@ -751,7 +754,7 @@ internal static class TwinsPlannerRules
         drawDuel.MainPhase.SpellSetableCards.Clear();
         drawDuel.MainPhase.SpellSetableCards.Add(new ClientCard(challenge, CardLocation.Hand, 0, 0));
         var challengeUpgrade = drawPlanner.Invoke(drawExecutor, new[] { afterDraw, System.Diagnostics.Stopwatch.StartNew() });
-        Check(challengeUpgrade != null && (int)resultType.GetField("Score").GetValue(challengeUpgrade) == 14,
+        Check(challengeUpgrade != null && (int)resultType.GetField("Score").GetValue(challengeUpgrade) == 1600,
             "a drawn Challenge can be set as a tie-break without awarding another point");
 
         var sendOrder = type.GetMethod("PreferredTwinSend", BindingFlags.Static | BindingFlags.NonPublic);
@@ -763,14 +766,14 @@ internal static class TwinsPlannerRules
         positionType.GetField("Extra").SetValue(beforeRedDraw, new List<int>());
         positionType.GetField("Pending").SetValue(beforeRedDraw, 1UL << (int)Enum.Parse(effects, "RedDraw"));
         var pendingMoves = type.GetMethod("PendingMoves", Private);
-        var netDrawPoints = type.GetMethod("NetDrawPoints", BindingFlags.Static | BindingFlags.NonPublic);
+        var netDrawPoints = type.GetMethod("NetDrawPoints", Private);
         Func<int[], int> redDrawPoints = deck =>
         {
             positionType.GetField("Deck").SetValue(beforeRedDraw, deck.ToList());
             var afterRedDraw = ((IEnumerable)pendingMoves.Invoke(executor, new[] { beforeRedDraw })).Cast<object>().Single();
-            return (int)netDrawPoints.Invoke(null, new[] { afterRedDraw });
+            return (int)netDrawPoints.Invoke(executor, new[] { afterRedDraw });
         };
-        Check(redDrawPoints(new[] { sweet, newYear }) == 2 && redDrawPoints(new[] { newYear }) == 4,
+        Check(redDrawPoints(new[] { sweet, newYear }) == 300 && redDrawPoints(new[] { newYear }) == 500,
             "Red's planned draw loses two tenths only while Sweet is still in the deck");
         var inDeck = new HashSet<int> { sweet, treat, newYear, frost };
         Func<int, bool, bool, bool, int> sendTarget = (sender, canSweet, canNewYear, spareNewYear) =>
@@ -854,8 +857,8 @@ internal static class TwinsPlannerRules
             && ((List<int>)positionType.GetField("Grave").GetValue(frostDraw)).SequenceEqual(new[] { frost }),
             "a pressured own turn draws once and leaves the other Frost in grave");
         Check((int)score.Invoke(executor, new[] { frostDraw, (object)true })
-            == (int)score.Invoke(executor, new[] { frostBoard, (object)true }) + 4,
-            "the guaranteed own draw adds 0.4 while the other Frost retains its next-turn value");
+            == (int)score.Invoke(executor, new[] { frostBoard, (object)true }) + 500,
+            "the guaranteed own draw adds 0.5 while the other Frost retains its next-turn value");
         opponentDraw.Invoke(null, new[] { frostDraw, (object)1 });
         Check(!((IEnumerable)type.GetMethod("PendingMoves", Private).Invoke(executor, new[] { frostDraw })).Cast<object>().Any(),
             "an additional opponent draw does not retrigger Frost in the same turn");

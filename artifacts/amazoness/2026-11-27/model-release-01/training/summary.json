@@ -1,0 +1,939 @@
+{
+  "training": {
+    "hands": 54,
+    "settled": 4042,
+    "replayed": 635,
+    "pairs": 205
+  },
+  "holdout": [
+    {
+      "id": 55,
+      "bot": 0,
+      "rule": [
+        0,
+        2,
+        8000,
+        200,
+        200
+      ],
+      "candidate": [
+        0,
+        2,
+        8000,
+        100,
+        100
+      ],
+      "reference": [
+        0,
+        2,
+        8000,
+        300,
+        0
+      ],
+      "candidateMain2": false,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 56,
+      "bot": 1,
+      "rule": [
+        0,
+        0,
+        0,
+        100
+      ],
+      "candidate": [
+        0,
+        0,
+        0,
+        100
+      ],
+      "reference": [
+        0,
+        0,
+        0,
+        100
+      ],
+      "candidateMain2": true,
+      "referenceMain2": true,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 57,
+      "bot": 1,
+      "rule": [
+        1,
+        0,
+        4100,
+        200
+      ],
+      "candidate": [
+        1,
+        0,
+        4900,
+        100
+      ],
+      "reference": [
+        1,
+        0,
+        4100,
+        200
+      ],
+      "candidateMain2": false,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 58,
+      "bot": 0,
+      "rule": [
+        0,
+        2,
+        8000,
+        100,
+        100
+      ],
+      "candidate": [
+        0,
+        2,
+        8000,
+        175,
+        175
+      ],
+      "reference": [
+        0,
+        2,
+        8000,
+        300,
+        200
+      ],
+      "candidateMain2": false,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 59,
+      "bot": 1,
+      "rule": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "candidate": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "reference": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "candidateMain2": true,
+      "referenceMain2": true,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 60,
+      "bot": 1,
+      "rule": [
+        0,
+        2,
+        0,
+        100
+      ],
+      "candidate": [
+        0,
+        0,
+        0,
+        100
+      ],
+      "reference": [
+        0,
+        2,
+        3000,
+        100
+      ],
+      "candidateMain2": true,
+      "referenceMain2": true,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 61,
+      "bot": 0,
+      "rule": [
+        0,
+        2,
+        8000,
+        100,
+        0
+      ],
+      "candidate": [
+        0,
+        1,
+        8000,
+        100,
+        100
+      ],
+      "reference": [
+        0,
+        2,
+        8000,
+        250,
+        250
+      ],
+      "candidateMain2": false,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 62,
+      "bot": 1,
+      "rule": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "candidate": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "reference": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "candidateMain2": true,
+      "referenceMain2": true,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 63,
+      "bot": 1,
+      "rule": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "candidate": [
+        0,
+        0,
+        0,
+        100
+      ],
+      "reference": [
+        0,
+        2,
+        1900,
+        0
+      ],
+      "candidateMain2": true,
+      "referenceMain2": true,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 64,
+      "bot": 0,
+      "rule": [
+        0,
+        1,
+        6600,
+        0,
+        0
+      ],
+      "candidate": [
+        0,
+        1,
+        6600,
+        0,
+        0
+      ],
+      "reference": [
+        0,
+        1,
+        6600,
+        0,
+        0
+      ],
+      "candidateMain2": false,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 65,
+      "bot": 1,
+      "rule": [
+        1,
+        0,
+        6000,
+        200
+      ],
+      "candidate": [
+        1,
+        0,
+        4500,
+        200
+      ],
+      "reference": [
+        1,
+        0,
+        6000,
+        200
+      ],
+      "candidateMain2": false,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 66,
+      "bot": 1,
+      "rule": [
+        1,
+        1,
+        3800,
+        0
+      ],
+      "candidate": [
+        1,
+        1,
+        4100,
+        100
+      ],
+      "reference": [
+        1,
+        1,
+        3800,
+        0
+      ],
+      "candidateMain2": false,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 67,
+      "bot": 0,
+      "rule": [
+        0,
+        1,
+        8000,
+        200,
+        100
+      ],
+      "candidate": [
+        0,
+        1,
+        8000,
+        175,
+        175
+      ],
+      "reference": [
+        0,
+        2,
+        8000,
+        300,
+        400
+      ],
+      "candidateMain2": false,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 68,
+      "bot": 1,
+      "rule": [
+        0,
+        0,
+        0,
+        100
+      ],
+      "candidate": [
+        0,
+        0,
+        0,
+        100
+      ],
+      "reference": [
+        0,
+        2,
+        1500,
+        200
+      ],
+      "candidateMain2": true,
+      "referenceMain2": true,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 69,
+      "bot": 1,
+      "rule": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "candidate": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "reference": [
+        0,
+        2,
+        6400,
+        300
+      ],
+      "candidateMain2": true,
+      "referenceMain2": true,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 70,
+      "bot": 0,
+      "rule": [
+        0,
+        2,
+        8000,
+        100,
+        100
+      ],
+      "candidate": [
+        0,
+        2,
+        8000,
+        100,
+        100
+      ],
+      "reference": [
+        0,
+        2,
+        8000,
+        200,
+        200
+      ],
+      "candidateMain2": false,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 71,
+      "bot": 1,
+      "rule": [
+        0,
+        0,
+        0,
+        100
+      ],
+      "candidate": [
+        0,
+        0,
+        0,
+        100
+      ],
+      "reference": [
+        1,
+        1,
+        11100,
+        0
+      ],
+      "candidateMain2": true,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 72,
+      "bot": 1,
+      "rule": [
+        1,
+        1,
+        1900,
+        0
+      ],
+      "candidate": [
+        0,
+        0,
+        0,
+        100
+      ],
+      "reference": [
+        1,
+        1,
+        1900,
+        0
+      ],
+      "candidateMain2": true,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 73,
+      "bot": 0,
+      "rule": [
+        0,
+        2,
+        8000,
+        100,
+        0
+      ],
+      "candidate": [
+        0,
+        2,
+        8000,
+        175,
+        175
+      ],
+      "reference": [
+        0,
+        2,
+        8000,
+        350,
+        350
+      ],
+      "candidateMain2": false,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 74,
+      "bot": 1,
+      "rule": [
+        0,
+        0,
+        0,
+        175
+      ],
+      "candidate": [
+        0,
+        0,
+        0,
+        100
+      ],
+      "reference": [
+        1,
+        1,
+        3400,
+        100
+      ],
+      "candidateMain2": true,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 75,
+      "bot": 1,
+      "rule": [
+        0,
+        1,
+        4200,
+        200
+      ],
+      "candidate": [
+        0,
+        0,
+        0,
+        450
+      ],
+      "reference": [
+        1,
+        1,
+        8500,
+        300
+      ],
+      "candidateMain2": true,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 76,
+      "bot": 0,
+      "rule": [
+        0,
+        2,
+        8000,
+        100,
+        100
+      ],
+      "candidate": [
+        0,
+        1,
+        8000,
+        100,
+        100
+      ],
+      "reference": [
+        0,
+        2,
+        8000,
+        100,
+        100
+      ],
+      "candidateMain2": false,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 77,
+      "bot": 1,
+      "rule": [
+        0,
+        0,
+        0,
+        100
+      ],
+      "candidate": [
+        0,
+        0,
+        0,
+        100
+      ],
+      "reference": [
+        0,
+        0,
+        0,
+        100
+      ],
+      "candidateMain2": true,
+      "referenceMain2": true,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": 78,
+      "bot": 1,
+      "rule": [
+        1,
+        2,
+        4900,
+        100
+      ],
+      "candidate": [
+        0,
+        1,
+        0,
+        200
+      ],
+      "reference": [
+        1,
+        2,
+        4900,
+        100
+      ],
+      "candidateMain2": true,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    }
+  ],
+  "directed": [
+    {
+      "id": "direct-lethal",
+      "bot": 1,
+      "rule": [
+        1,
+        0,
+        4500,
+        100
+      ],
+      "candidate": [
+        1,
+        0,
+        4500,
+        100
+      ],
+      "reference": [
+        1,
+        0,
+        4500,
+        100
+      ],
+      "candidateMain2": false,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": "clear-and-main2",
+      "bot": 1,
+      "rule": [
+        0,
+        1,
+        0,
+        150
+      ],
+      "candidate": [
+        0,
+        1,
+        0,
+        150
+      ],
+      "reference": [
+        0,
+        1,
+        4500,
+        100
+      ],
+      "candidateMain2": true,
+      "referenceMain2": true,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": "fusion-empress",
+      "bot": 1,
+      "rule": [
+        1,
+        0,
+        6300,
+        100
+      ],
+      "candidate": [
+        0,
+        0,
+        4800,
+        375
+      ],
+      "reference": [
+        1,
+        0,
+        6300,
+        100
+      ],
+      "candidateMain2": true,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": "grave-empress",
+      "bot": 1,
+      "rule": [
+        1,
+        0,
+        8800,
+        0
+      ],
+      "candidate": [
+        1,
+        0,
+        7500,
+        200
+      ],
+      "reference": [
+        1,
+        0,
+        8800,
+        0
+      ],
+      "candidateMain2": false,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": "curse-harpie",
+      "bot": 1,
+      "rule": [
+        1,
+        0,
+        6000,
+        300
+      ],
+      "candidate": [
+        0,
+        0,
+        4300,
+        100
+      ],
+      "reference": [
+        1,
+        0,
+        6000,
+        300
+      ],
+      "candidateMain2": true,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": "rescue-recovery",
+      "bot": 0,
+      "rule": [
+        0,
+        1,
+        8000,
+        100,
+        200
+      ],
+      "candidate": [
+        0,
+        1,
+        8000,
+        100,
+        0
+      ],
+      "reference": [
+        0,
+        2,
+        8000,
+        200,
+        100
+      ],
+      "candidateMain2": false,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": "formation-removal",
+      "bot": 0,
+      "rule": [
+        0,
+        1,
+        8000,
+        300,
+        200
+      ],
+      "candidate": [
+        0,
+        1,
+        8000,
+        300,
+        200
+      ],
+      "reference": [
+        0,
+        1,
+        8000,
+        300,
+        200
+      ],
+      "candidateMain2": false,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": "sword-self",
+      "bot": 0,
+      "rule": [
+        0,
+        1,
+        7100,
+        100,
+        0
+      ],
+      "candidate": [
+        0,
+        1,
+        8000,
+        100,
+        150
+      ],
+      "reference": [
+        0,
+        1,
+        8000,
+        100,
+        150
+      ],
+      "candidateMain2": false,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    },
+    {
+      "id": "raigeki-pressure",
+      "bot": 0,
+      "rule": [
+        0,
+        2,
+        8000,
+        100,
+        100
+      ],
+      "candidate": [
+        0,
+        1,
+        8000,
+        100,
+        100
+      ],
+      "reference": [
+        0,
+        4,
+        8000,
+        350,
+        200
+      ],
+      "candidateMain2": false,
+      "referenceMain2": false,
+      "ruleVerified": true,
+      "candidateVerified": true,
+      "referenceVerified": true
+    }
+  ]
+}

@@ -291,6 +291,7 @@ function rollout(engine,input,mode) {
                 } else {
                     const view=visible(duel,state.bot);
                     let options=mode.replay && name==='SelectPosition' ? optionsFor(msg,state) : choices(msg,state,view);
+                    if (mode.actionFilter) options=mode.actionFilter(msg,name,options,view,state);
                     if (!options.length) return {error:'NoPolicyAction:'+name};
                     options=options.map(o=>{
                         const keys=features(o,state,view,name);
@@ -325,8 +326,10 @@ function rollout(engine,input,mode) {
     }
 }
 
-function verified(engine,input,result) {
-    const duplicate=result?.outcome && rollout(engine,input,{prefix:result.wire,replay:true,deadline:Date.now()+2000});
+function verified(engine,input,result,actionFilter) {
+    const duplicate=result?.outcome && rollout(engine,input,{
+        prefix:result.wire,replay:true,deadline:Date.now()+2000,actionFilter,
+    });
     return Boolean(duplicate?.outcome && duplicate.main2===result.main2 &&
         duplicate.wire.join('|')===result.wire.join('|') && duplicate.outcome.join(',')===result.outcome.join(','));
 }
@@ -364,14 +367,14 @@ function buildPairs(runs) {
     return pairs;
 }
 
-function search(engine,input,{attempts,caseMs}) {
+function search(engine,input,{attempts,caseMs,actionFilter}) {
     const random=randomFrom(input.seed), deadline=Date.now()+caseMs;
     const lines=[], seen=new Set(), errors={};
     for (let i=0;i<attempts&&Date.now()<deadline;i++) {
         const parents=lines.slice(0,14).filter(a=>a.steps.length);
         const parent=i%3 ? parents[Math.floor(random()*parents.length)] : undefined;
         const prefix=parent?.wire, pivot=parent?.steps[Math.floor(random()*parent.steps.length)]?.offset;
-        const result=rollout(engine,input,{random:i?random:undefined,prefix,pivot,deadline});
+        const result=rollout(engine,input,{random:i?random:undefined,prefix,pivot,deadline,actionFilter});
         if (!result.outcome) { errors[result.error]=(errors[result.error]||0)+1; continue; }
         const key=hash(result.wire.join('|'));
         if (seen.has(key)) continue;
@@ -379,7 +382,12 @@ function search(engine,input,{attempts,caseMs}) {
         lines.push(result);
         lines.sort((a,b)=>compare(b.outcome,a.outcome));
     }
-    const eligible=lines.slice(0,12).filter(result=>verified(engine,input,result));
+    const leaders=lines.slice(0,12);
+    // Keep examples on both sides of a reachable lethal boundary for focused training.
+    if (actionFilter && lines[0]?.outcome[0]===1) {
+        leaders.push(...lines.filter(line=>line.outcome[0]!==1).slice(0,8));
+    }
+    const eligible=[...new Set(leaders)].filter(result=>verified(engine,input,result,actionFilter));
     return { settled:lines.length, replayed:eligible.length, errors, best:eligible[0],
         pairs:buildPairs(eligible) };
 }
@@ -524,4 +532,4 @@ async function main() {
 }
 
 if (require.main===module) main().catch(error=>{console.error(error.stack);process.exitCode=1;});
-module.exports={rollout,verified,deckFrom,makeCases,directedCases,update,features,compare};
+module.exports={rollout,verified,deckFrom,makeCases,directedCases,update,features,compare,search};

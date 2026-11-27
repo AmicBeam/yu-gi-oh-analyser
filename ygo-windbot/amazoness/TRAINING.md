@@ -54,3 +54,13 @@ node phases4/ygo-windbot/amazoness/full-train.cjs --fixture $fixture --data "$fi
 `phases4/new-scripts/script/c23965033.lua` 来自用户给的新卡包。散装旧脚本会覆盖 YPK，必须按此叠层顺序复跑。输入清单记录训练器、策略、牌表与实读 Lua 的 SHA-256。[本机重放验收](audit-training.cjs)重新执行每条最佳轨迹和留出轨迹，输出候选的结算数、漏斩局及相对规则退步的用例。
 
 全阶段结果与发布制品（本机 `artifacts/amazoness/2026-11-27/full-prelaunch/README.md`）包含最新 Windows 候选、定位脚本覆盖后的完整回放、隔离服冒烟与上线判定。
+
+## 后攻斩杀专项
+
+`lethal-train.cjs` 从匹配当前策略指纹的已训练权重继续拟合。54 手搜索用于采样，18 手用于选择模型调整幅度，24 手留出用于最终对拍。专项样本只用同一个决策前缀下、经引擎重放确认导致是否斩杀发生变化的动作对。调整范围限于后攻主一至战斗阶段的特征，保留主二和先攻权重。对拍同时记录解场数、实伤、正常进入主二和引擎错误。
+
+```sh
+NODE_PATH=/path/to/srvpro2/node_modules node ygo-windbot/amazoness/lethal-train.cjs \
+  /path/to/srvpro2 ygo-windbot/Decks/AI_Amazoness.ydk /path/to/candidate.json \
+  /path/to/inputs.json /path/to/lethal-run /path/to/ygopro /path/to/card-scripts
+```

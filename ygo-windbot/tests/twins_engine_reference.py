@@ -32,17 +32,21 @@ def read_standard(path, mode):
 
 
 class EngineReference:
-    def __init__(self, work, fixture, windbot, output, budget):
+    def __init__(self, work, fixture, windbot, output, budget, *, scorer=None):
         self.work = work
         self.fixture = fixture.resolve()
         self.output = output
         self.budget = budget
-        self.node_env = dict(os.environ, NODE_PATH=str(work / "node_modules"))
+        self.node_env = dict(os.environ, NODE_PATH=str(self.fixture / "node_modules"))
         paths = [str(windbot.resolve().parent), os.environ.get("MONO_PATH", "")]
         self.mono_env = dict(os.environ, MONO_PATH=os.pathsep.join(filter(None, paths)))
-        self.scorer = work / "TwinsEngineScore.exe"
-        self.run(["mcs", "-nowarn:0649", f"-r:{windbot.resolve()}", "-r:System.Runtime.Serialization",
-                  f"-out:{self.scorer}", str(HERE / "TwinsEngineScore.cs")], timeout=30)
+        self.scorer_launcher = [] if os.name == "nt" else ["mono"]
+        if scorer is not None:
+            self.scorer = scorer.resolve(strict=True)
+        else:
+            self.scorer = work / "TwinsEngineScore.exe"
+            self.run(["mcs", "-nowarn:0649", f"-r:{windbot.resolve()}", "-r:System.Runtime.Serialization",
+                      f"-out:{self.scorer}", str(HERE / "TwinsEngineScore.cs")], timeout=30)
 
     @staticmethod
     def run(command, *, timeout, env=None, script_input=None):
@@ -51,12 +55,16 @@ class EngineReference:
             raise RuntimeError(result.stderr.strip() or result.stdout.strip())
         return result.stdout
 
-    def engine(self, input, scenario):
+    def engine(self, input, scenario, *, training_attempts=None, coach=None):
         config = {"input": input, "scenario": scenario, "budget": self.budget}
+        if training_attempts is not None:
+            config["trainingAttempts"] = training_attempts
+        if coach is not None:
+            config["coach"] = coach
         default_wasm = os.environ.get("DEFAULT_OCGCORE_WASM_PATH")
         if default_wasm:
             config["defaultWasm"] = str((self.work / default_wasm).resolve())
-        config["scorer"] = str(self.scorer)
+        config["scorer"] = [*self.scorer_launcher, str(self.scorer)]
         config_path = self.work / "engine-reference.json"
         config_path.write_text(json.dumps(config), encoding="utf-8")
         result = self.run(["node", str(HERE / "twins-engine-reference.cjs"), str(self.fixture), str(config_path)],
@@ -66,12 +74,12 @@ class EngineReference:
 
     def score(self, candidates):
         observations = [{"position": c["position"], "nibiru_window": c.get("nibiru_window")} for c in candidates]
-        scores = self.run(["mono", str(self.scorer), str(self.fixture / "cards.cdb")], env=self.mono_env, timeout=30,
+        scores = self.run([*self.scorer_launcher, str(self.scorer), str(self.fixture / "cards.cdb")], env=self.mono_env, timeout=30,
                           script_input="".join(json.dumps(value) + "\n" for value in observations))
-        points = list(map(int, scores.splitlines()))
+        points = list(map(float, scores.splitlines()))
         if len(points) != len(candidates):
             raise RuntimeError("engine scorer returned an unexpected number of scores")
-        return [point / 10 for point in points]
+        return [round(point / 10, 3) for point in points]
 
     def best(self, input, label, scenario=None, qualify=None):
         result = self.engine(input, scenario)

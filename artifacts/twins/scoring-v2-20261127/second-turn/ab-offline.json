@@ -1,0 +1,32 @@
+{
+  "all_axes": {
+    "lethal": 215,
+    "damage": 296,
+    "main2": 563,
+    "removal": 706
+  },
+  "heldout_pairs": {
+    "lethal": 69,
+    "damage": 44,
+    "main2": 108,
+    "removal": 105
+  },
+  "correct": {
+    "candidate": {
+      "lethal": 53,
+      "damage": 25,
+      "main2": 58,
+      "removal": 68
+    },
+    "deployed": {
+      "lethal": 46,
+      "damage": 28,
+      "main2": 61,
+      "removal": 69
+    }
+  },
+  "heldout_accuracy": {
+    "candidate": 0.6258,
+    "deployed": 0.6258
+  }
+}

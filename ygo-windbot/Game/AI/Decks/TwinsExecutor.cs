@@ -4,7 +4,6 @@ using YGOSharp.OCGWrapper.Enums;
 
 namespace WindBot.Game.AI.Decks
 {
-    [Deck("Twins", "AI_Twins", "Normal")]
     public partial class TwinsExecutor : DefaultExecutor
     {
         private const int KiSikil = 36326160;
@@ -257,6 +256,7 @@ namespace WindBot.Game.AI.Decks
                 if (card.IsCode(Requiem))
                     _planRequiemFromExtra = true;
             }
+            RecordRecoveryMove(previousControler, (CardLocation)previousLocation, currentControler, (CardLocation)currentLocation);
             base.OnMove(card, previousControler, previousLocation, currentControler, currentLocation);
         }
 
@@ -896,5 +896,13 @@ namespace WindBot.Game.AI.Decks
                 return index < 0 ? order.Length : index;
             }).Take(count).ToList();
         }
+    }
+
+    [Deck("Twins", "AI_Twins", "Normal")]
+    public sealed class StandardTwinsExecutor : TwinsExecutor
+    {
+        public StandardTwinsExecutor(GameAI ai, Duel duel) : base(ai, duel) { }
+
+        protected override bool UsesUnifiedBoardWeights => false;
     }
 }

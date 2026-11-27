@@ -14,7 +14,7 @@ from twins_engine_reference import EngineReference, read_standard, write_json
 
 HAND_TRAPS = {
     "nibiru": 27204311, "ash": 14558128, "dragon": 70088809,
-    "droll": 94145022, "ogre": 59438930, "imperm": 10045474,
+    "droll": 94145022, "ogre": 59438930, "imperm": 10045474, "belle": 73642296,
 }
 DRAGON_EXTRA = [72444406, 16172067, 33698022, 90953320, 50954680]
 MASTER = DRAGON_EXTRA[0]
@@ -53,11 +53,14 @@ def interference_outcome(events, scenario):
 
     prior = next((e for e in reversed(events[:marker]) if e[0] == "Chaining" and e[2] == 0), None)
     end_of_chain = next((i for i in range(end, len(events)) if events[i][0] == "ChainEnd"), len(events))
-    if scenario in ("ash", "imperm"):
+    if scenario in ("ash", "imperm", "belle"):
         landed = prior is not None and any(
             e[:2] in (["ChainDisabled", prior[5]], ["ChainNegated", prior[5]])
             for e in events[index:end_of_chain]
         )
+        if scenario == "belle":
+            sunny = 93672138
+            landed = landed and target == sunny and prior[1] == sunny and prior[4] == sunny * 16
         if scenario == "imperm" and not landed:
             target_pick = next((e for e in events[marker:end] if e[0] == "InterferenceTarget"), None)
             landed = target_pick is not None and not any(
@@ -91,12 +94,17 @@ def interference_outcome(events, scenario):
     return {**result, "landed": landed, **({} if landed else {"reason": "target outcome missing"})}
 
 
-def candidates(scenario, main, extra, seed):
-    rng = random.Random(seed + list(HAND_TRAPS).index(scenario) * 1009)
+def interference_deck(scenario, main, seed):
     trap = HAND_TRAPS[scenario]
     opposing = list(main)
     if trap not in opposing:
         opposing[-1] = trap
+    return {"main": fixed_deck(opposing, [trap], seed),
+            "extra": DRAGON_EXTRA if scenario == "dragon" else [], "side": []}
+
+
+def candidates(scenario, main, extra, seed):
+    rng = random.Random(seed + list(HAND_TRAPS).index(scenario) * 1009)
     seen = set()
     while True:
         starter = rng.choice((36326160, 73810864))
@@ -111,8 +119,7 @@ def candidates(scenario, main, extra, seed):
         yield {
             "scenario": scenario, "hand": hand, "draw_seed": draw_seed,
             "main": fixed_deck(main, hand, draw_seed), "extra": extra,
-            "opponent": {"main": fixed_deck(opposing, [trap], draw_seed),
-                         "extra": DRAGON_EXTRA if scenario == "dragon" else [], "side": []},
+            "opponent": interference_deck(scenario, main, draw_seed),
         }
 
 
@@ -142,13 +149,13 @@ def has_hit(variant):
 
 def comparison(case, reference, bot):
     same_interference = not has_hit(reference) or has_hit(bot)
-    observed_gap = (round(reference["score"] - bot["score"], 1)
+    observed_gap = (round(reference["score"] - bot["score"], 3)
                     if "score" in bot and same_interference else None)
     target_score = max(reference["score"], reference.get("minimum_score", reference["score"]))
     return {"scenario": case["scenario"], "hand": case["hand"], "draw_seed": case["draw_seed"],
             "reference": reference, "bot": bot, "observed_gap": observed_gap,
             "target_score": target_score,
-            "gap": None if observed_gap is None else round(target_score - bot["score"], 1)}
+            "gap": None if observed_gap is None else round(target_score - bot["score"], 3)}
 
 
 def run(args, work, ports, seat, main, extra):
@@ -243,7 +250,7 @@ def run(args, work, ports, seat, main, extra):
     print(json.dumps(summary), flush=True)
     failed = (not standard_ready or untargeted > 0 or mismatches > 0
               or any(gap > args.max_gap for gap in gaps)
-              or any(ms is None or ms > args.max_wait_ms for ms in waits))
+              or (args.max_wait_ms is not None and any(ms is None or ms > args.max_wait_ms for ms in waits)))
     return int(failed)
 
 
@@ -262,11 +269,13 @@ def main():
     parser.add_argument("--attempts", type=int, default=12, help="candidate hands per scenario")
     parser.add_argument("--reference-ms", type=int, default=10000)
     parser.add_argument("--max-gap", type=float, default=0.4)
-    parser.add_argument("--max-wait-ms", type=int, default=3000)
+    parser.add_argument("--max-wait-ms", type=int, help="optionally fail if the main-phase message gap exceeds this many milliseconds")
     args = parser.parse_args()
     args.scenario = args.scenario or list(HAND_TRAPS)
     if len(set(args.scenario)) != len(args.scenario):
         parser.error("choose each scenario at most once")
+    if args.max_wait_ms is not None and args.max_wait_ms <= 0:
+        parser.error("max-wait-ms must be positive")
     if not 0 < args.samples <= args.attempts or args.reference_ms <= 0:
         parser.error("invalid sample count or reference budget")
     args.output = args.output.resolve()

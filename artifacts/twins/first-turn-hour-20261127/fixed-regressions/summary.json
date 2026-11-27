@@ -1,0 +1,31 @@
+{
+  "cases": 2,
+  "unique_replays": 2,
+  "jobs": 1,
+  "holdout_unique_hands": 2,
+  "training_unique_hands": 162,
+  "training_holdout_overlap": 0,
+  "comparable": 2,
+  "improved": 0,
+  "equal": 1,
+  "regressed": 1,
+  "learned_search_exercised": 2,
+  "max_main_gap_ms": {
+    "rule": 3076,
+    "learned": 3449
+  },
+  "max_search_ms": {
+    "rule": 2984,
+    "learned": 3356
+  },
+  "max_wait_gate_ms": 3000,
+  "issues": {
+    "score_regression": 1,
+    "main_wait": 1
+  },
+  "failed_cases": [
+    "fresh-nibiru-blue",
+    "fresh-droll-blue"
+  ],
+  "model_sha256": "6adad81b883a641213ecf98059d35c5bee1d6372dace10455da36b8006259e25"
+}

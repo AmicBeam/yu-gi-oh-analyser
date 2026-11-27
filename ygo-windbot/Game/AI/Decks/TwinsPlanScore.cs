@@ -30,14 +30,28 @@ namespace WindBot.Game.AI.Decks
             return best >= 0 ? best : ScoreBoard(p, p.Field, exact);
         }
 
+        // Keep fractional interactions exact internally, including 1.05 × 0.7.
+        private const int ScoreUnitsPerPoint = 1000;
+        private const int ScoreUnitsPerTenth = ScoreUnitsPerPoint / 10;
+        private const int DirectRemovalPoints = 1000;
+        protected virtual bool UsesUnifiedBoardWeights => true;
+        private int DelayedRemovalPoints => UsesUnifiedBoardWeights ? 800 : 1000;
+        private int HeistNegatePoints => UsesUnifiedBoardWeights ? 735 : 1000;
+        private int DrawPoints => UsesUnifiedBoardWeights ? 500 : 400;
+        private int DisconnectNegatePoints => UsesUnifiedBoardWeights ? 1100 : 1000;
+        private int NegateDestroyBonus => UsesUnifiedBoardWeights ? 300 : 0;
+
+        private static string TraceScore(int score) =>
+            (score / (decimal)ScoreUnitsPerTenth).ToString(System.Globalization.CultureInfo.InvariantCulture);
+
         private int ScoreBoard(PlanPosition p, int[] field, bool exact)
         {
             int score = NetDrawPoints(p) + (HasNibiruDefense(p) ? NibiruDefensePoints : 0);
             if (CanActivateOnField(field, Array.IndexOf(field, Caesar), p.NormalZones))
-                score += 13;
+                score += 1300; // Caesar covers summon effects and can destroy the negated card.
             bool desirae = CanActivateOnField(field, Array.IndexOf(field, Desirae), p.NormalZones) && p.Equipment != 0;
             if (desirae)
-                score += 10;
+                score += UsesUnifiedBoardWeights ? 1050 : 1000; // Desirae negates effects across all three card types.
 
             bool canPayAbao = p.Hand.Count != 0;
             bool selfTrade = desirae && (p.Equipment != 0 || p.Grave.Any(LightFiend));
@@ -47,7 +61,7 @@ namespace WindBot.Game.AI.Decks
             bool evilOnField = field.Any(Evil);
             bool counterSet = (p.Set & SetDisconnect) != 0;
             if (evilOnField && p.Grave.Contains(Frost))
-                score += 2; // The opponent must search before Frost can draw.
+                score += DrawPoints / 2; // The opponent must search before Frost can draw.
             bool nightfall = CanActivateOnField(field, Array.IndexOf(field, Nightfall), p.NormalZones);
             bool photo = CanActivateOnField(field, Array.IndexOf(field, NightPhoto), p.NormalZones) && PhotoRevivalCost(p) != 0;
             bool challenge = (p.Set & SetChallenge) != 0;
@@ -188,7 +202,7 @@ namespace WindBot.Game.AI.Decks
                 int gryphon = GryphonPoints(current);
                 int abaoZone = canPayAbao ? Array.IndexOf(current, Abao) : -1;
                 bool abaoAvailable = CanActivateOnField(current, abaoZone, p.NormalZones);
-                int abaoPop = abaoAvailable ? 10 : 0;
+                int abaoPop = abaoAvailable ? DirectRemovalPoints : 0;
                 int abaoGryphon = abaoAvailable ? AbaoGryphonPoints(p, current, option.Spent) : 0;
                 bool abaoChangesLock = abaoAvailable && current.Contains(Gryphon)
                     && (Arrows(Abao, abaoZone) & (BoardEnemyMain | (3 << 5))) != 0;
@@ -201,13 +215,17 @@ namespace WindBot.Game.AI.Decks
                     bool releasedBlue = blue || challengeBlue;
                     bool releasedHeist = heist || challengeTrade && challengeHeist
                         || useChallenge == 0 && challengeFollowup;
-                    bool traded = newYearTrades || challengeTrade
-                        || trap && selfTrade && (releasedBlue || current.Any(IsBlueTwin));
-                    int total = (releasedBlue ? 10 : 0) + (releasedHeist ? 10 : 0) + (draw ? 4 : 0)
-                        + (trap ? 10 + (red ? 4 : 0) : 0) + (traded ? 10 : 0);
+                    bool trapCanDestroy = trap && (releasedBlue || current.Any(IsBlueTwin));
+                    bool tradedWithoutTrap = newYearTrades || challengeTrade;
+                    bool traded = tradedWithoutTrap || trapCanDestroy && selfTrade;
+                    int trapPoints = trap ? DisconnectNegatePoints + (red ? DrawPoints : 0) : 0;
+                    if (trapCanDestroy && (!selfTrade || tradedWithoutTrap))
+                        trapPoints += NegateDestroyBonus;
+                    int total = (releasedBlue ? DelayedRemovalPoints : 0) + (releasedHeist ? HeistNegatePoints : 0)
+                        + (draw ? DrawPoints : 0) + trapPoints + (traded ? DelayedRemovalPoints : 0);
                     // Each option spends the same activation, so choose one result.
                     int abaoResult = Math.Max(gryphon + abaoPop, abaoGryphon);
-                    if (abaoAvailable && (abaoResult < gryphon + 10 || abaoChangesLock))
+                    if (abaoAvailable && (abaoResult < gryphon + DirectRemovalPoints || abaoChangesLock))
                         abaoResult = Math.Max(abaoResult, AbaoTwinPoints(current, p.NormalZones, abaoZone,
                             canUseBlue && !releasedBlue, canUseHeist && !releasedHeist,
                             redInGrave && option.Spent != EvilKiSikil && !draw));
@@ -219,15 +237,16 @@ namespace WindBot.Game.AI.Decks
             {
                 int cycledGryphon = NewYearGryphonPoints(p, field);
                 if (cycledGryphon > 0)
-                    interaction = Math.Max(interaction, 14 + cycledGryphon + (counterSet ? 14 : 0));
+                    interaction = Math.Max(interaction, DelayedRemovalPoints + DrawPoints + cycledGryphon
+                        + (counterSet ? DisconnectNegatePoints + DrawPoints + NegateDestroyBonus : 0));
             }
             return score + interaction;
         }
 
-        private const int SweetDrawPenalty = 2;
+        private const int SweetDrawPenalty = 200;
 
-        private static int NetDrawPoints(PlanPosition p) =>
-            p.Draws * 4 - p.OpponentDraws * 10 - (p.RedDrawWithSweetInDeck ? SweetDrawPenalty : 0);
+        private int NetDrawPoints(PlanPosition p) =>
+            p.Draws * DrawPoints - p.OpponentDraws * ScoreUnitsPerPoint - (p.RedDrawWithSweetInDeck ? SweetDrawPenalty : 0);
 
         private int AbaoTwinPoints(int[] field, int normalZones, int abaoZone, bool blue, bool heist, bool red)
         {
@@ -244,7 +263,7 @@ namespace WindBot.Game.AI.Decks
                     continue;
                 foreach (var option in OpponentSummons(released, twin, false, normalZones))
                 {
-                    int effect = option.Blue || option.Heist ? 10 : option.Draw ? 4 : 0;
+                    int effect = option.Blue ? DelayedRemovalPoints : option.Heist ? HeistNegatePoints : option.Draw ? DrawPoints : 0;
                     if (effect == 0)
                         continue;
                     bool preservesEffects = Enumerable.Range(0, field.Length).All(zone =>
@@ -312,7 +331,7 @@ namespace WindBot.Game.AI.Decks
             if (!field.Contains(Gryphon) || (arrows & BoardEnemyMain) != 0)
                 return 0;
             bool singleExtra = (field[5] == 0) != (field[6] == 0);
-            return singleExtra && (arrows & (1 << (field[5] == 0 ? 5 : 6))) == 0 ? 23 : 20;
+            return singleExtra && (arrows & (1 << (field[5] == 0 ? 5 : 6))) == 0 ? 2300 : 2000;
         }
 
         private int GryphonRevivalZone(int[] field) => GryphonRevivalZone(field, out _);
@@ -458,7 +477,7 @@ namespace WindBot.Game.AI.Decks
             int pending = p.Pending == 0 ? 0 : 2;
             int engine = p.Grave.Count(id => id == Engraver || id == Yama || id == LilLa || id == KiSikil);
             int reuse = p.Grave.Count(id => id == Requiem || id == Deal || id == Sunny);
-            return score * 3 + resources * 4 + hand * 3 + pending + engine * 4 + reuse * 3 - p.PasswordBanishes * 4
+            return score * 3 / ScoreUnitsPerTenth + resources * 4 + hand * 3 + pending + engine * 4 + reuse * 3 - p.PasswordBanishes * 4
                 + (p.Trouble ? 4 : 0) + (p.Normal ? 0 : 2) + p.Hand.Count
                 - TwinSearchesUsed(p) * 3 - p.LinkTwoForLinkOne * 4;
         }
@@ -507,7 +526,7 @@ namespace WindBot.Game.AI.Decks
             if (p.Grave.Contains(Sunny) && p.Fresh(PlanEffect.Fusion)) combo += 16;
             if (p.Twins && p.Fresh(PlanEffect.Fusion)) combo -= 14;
             if (p.Has(Nightfall) && p.Field.Count(id => id != 0) == 1) combo -= 7;
-            return cards + twinHand * 10 + combo + p.Score + (p.Pending != 0 ? 3 : 0) - p.PasswordBanishes * 4
+            return cards + twinHand * 10 + combo + p.Score / ScoreUnitsPerTenth + (p.Pending != 0 ? 3 : 0) - p.PasswordBanishes * 4
                 - TwinSearchesUsed(p) * 3 - p.LinkTwoForLinkOne * 4;
         }
 
@@ -616,7 +635,8 @@ namespace WindBot.Game.AI.Decks
             return result;
         }
 
-        private static IEnumerable<PlanPosition> SelectFrontier(List<PlanPosition> states, int width, bool reserveContinuations)
+        private IEnumerable<PlanPosition> SelectFrontier(List<PlanPosition> states, int width, bool reserveContinuations,
+            bool timed)
         {
             if (states.Count <= width)
                 return states;
@@ -630,7 +650,11 @@ namespace WindBot.Game.AI.Decks
                 .SelectMany(group => group.Take(group.First().Has(Gryphon) ? 5 : 2))
                 .ToList();
             var scoring = diverse.OrderByDescending(p => p.Rank).Take(width / 5);
-            var promising = diverse.OrderByDescending(p => p.Potential).ToArray();
+            var ranker = timed ? OpeningBranchRanker : null;
+            if (ranker != null)
+                _trainedFrontiers++;
+            var promising = ranker == null ? diverse.OrderByDescending(p => p.Potential).ToArray()
+                : diverse.OrderByDescending(ranker.Priority).ToArray();
             var immediate = !reserveContinuations ? Enumerable.Empty<PlanPosition>()
                 : promising.Where(p => p.Continuation != ContinuationKind.None)
                 .GroupBy(p => p.Continuation)
@@ -652,7 +676,19 @@ namespace WindBot.Game.AI.Decks
                         developing.Add(group[index]);
                 families.RemoveAll(group => index + 1 >= group.Length);
             }
-            return immediate.Concat(scoring).Concat(searches).Concat(developing).Distinct().Take(width);
+            var incumbent = immediate.Concat(scoring).Concat(searches).Concat(developing).Distinct().Take(width);
+            var recovery = timed && _recoverySearchActive ? RecoveryBranchRanker.Value : null;
+            if (recovery == null || width < 8)
+                return incumbent;
+            var retained = incumbent.ToList();
+            var original = new HashSet<PlanPosition>(retained);
+            // Propose at most one eighth of the beam. Preserve the original prefix,
+            // including its immediate continuations and high-scoring states.
+            var proposals = diverse.OrderByDescending(recovery.Priority).Take(width)
+                .Where(next => !original.Contains(next)).Take(width / 8).ToList();
+            if (proposals.Count != 0)
+                _recoveryFrontiers++;
+            return retained.Take(width - proposals.Count).Concat(proposals);
         }
 
         private enum BoardSearchPolicy { Reference, HoldBackrow, DevelopEngines, ResourceExchange, ContinueEffects, PreservePhoto, Tactical }
@@ -824,7 +860,7 @@ namespace WindBot.Game.AI.Decks
                     break;
                 if (next.Count > width)
                     cutoffs += next.Count - width;
-                beam = SelectFrontier(next, width, continueEffects || drawPressure).ToList();
+                beam = SelectFrontier(next, width, continueEffects || drawPressure, timer != null).ToList();
                 foreach (var state in beam)
                 {
                     if (timer != null && timer.ElapsedMilliseconds >= timeLimitMs)

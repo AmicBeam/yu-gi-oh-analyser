@@ -1,0 +1,15 @@
+{
+  "cases": 45,
+  "attempts": 4500,
+  "settled": 4471,
+  "wins": 123,
+  "main2": 4344,
+  "interrupted": 2769,
+  "effects": 473,
+  "verified_witnesses": 45,
+  "training_pairs": 1454,
+  "status": "completed",
+  "evaluation_pairs": 326,
+  "evaluation_accuracy": 0.6258,
+  "deadline_utc": "2026-11-27T04:19:18.019194+00:00"
+}

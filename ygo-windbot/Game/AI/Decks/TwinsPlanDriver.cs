@@ -14,6 +14,8 @@ namespace WindBot.Game.AI.Decks
         private ClientCard _planReturningNewYear;
         private bool _planStopped, _planInterrupted, _planDealLinked, _planFiends, _planTwins;
         private bool _planOtherInterference, _planInventoryChanged, _planDrawPending;
+        private bool _confirmedRecovery, _recoverySearchActive;
+        private int _opponentRemovalLink;
         private const int MoonSqueeze = 47605577;
         private bool _moonDrawPressure, _settleDrawPressure, _finishWithBackrow;
         private ChainInfo _moonDrawOnly;
@@ -175,7 +177,38 @@ namespace WindBot.Game.AI.Decks
                     || !chain.HasAnnounce(Util.GetStringId(MoonSqueeze, 2)) && chain != _moonDrawOnly)
                     _moonDrawPressure = true;
             }
+            if (RecoveryModelRequested && InBoardBuildPhase && chain?.ActivatePlayer == 1
+                && !Duel.IsCurrentSolvingChainNegated())
+            {
+                if (_opponentRemovalLink == chainIndex)
+                    ConfirmRecovery("resource-loss");
+                else if (chain.IsActivateCode(Droll))
+                    ConfirmRecovery("search-lock");
+            }
             base.OnChainSolved(chainIndex);
+        }
+
+        private void ConfirmRecovery(string reason)
+        {
+            if (!_confirmedRecovery)
+                TracePlanner("recovery-confirmed", reason);
+            _confirmedRecovery = true;
+        }
+
+        private void RecordRecoveryMove(int previousController, CardLocation previousLocation,
+            int currentController, CardLocation currentLocation)
+        {
+            if (!RecoveryModelRequested || !InBoardBuildPhase || previousController != 0
+                || Duel.GetCurrentSolvingChainInfo()?.ActivatePlayer != 1)
+                return;
+            bool fromField = previousLocation == CardLocation.MonsterZone || previousLocation == CardLocation.SpellZone;
+            bool fromHandOrGrave = previousLocation == CardLocation.Hand || previousLocation == CardLocation.Grave;
+            bool resourceLost = currentController != 0 || currentLocation == CardLocation.Deck
+                || currentLocation == CardLocation.Removed || currentLocation == CardLocation.Extra;
+            if (fromField && (currentController != 0 || currentLocation != previousLocation)
+                || fromHandOrGrave && (resourceLost
+                    || previousLocation == CardLocation.Hand && currentLocation == CardLocation.Grave))
+                _opponentRemovalLink = Duel.SolvingChainIndex;
         }
 
         private PlanPosition LivePlanPosition()
@@ -285,7 +318,7 @@ namespace WindBot.Game.AI.Decks
                 _planPlacement = null;
                 _planPayment = null;
                 _planMaterialCards = null;
-                bool needsPlan = _planInterrupted || _planInventoryChanged || _boardPlan == null
+                bool needsPlan = _planInterrupted || _planInventoryChanged || _confirmedRecovery || _boardPlan == null
                     || NextPlanMove != null && !PlanOffered(NextPlanMove);
                 if (needsPlan || _planDrawPending)
                 {
@@ -296,13 +329,23 @@ namespace WindBot.Game.AI.Decks
                         TracePlanner("inventory-replan", string.Empty);
                     else if (needsPlan && _boardPlan != null)
                         TracePlanner(FollowsBoardPriorities(NextPlanMove) ? "resync" : "policy-replan", NextPlanMove.ToString());
-                    bool recovering = _planInterrupted;
+                    bool recovering = _planInterrupted || _confirmedRecovery;
+                    _recoverySearchActive = _confirmedRecovery;
+                    _confirmedRecovery = false;
                     _planInterrupted = _planInventoryChanged = false;
 
                     var timer = Stopwatch.StartNew();
                     var position = LivePlanPosition();
-                    var plan = needsPlan ? ChooseBoardPlan(position, timer, recovering)
-                        : ImprovePlanAfterDraw(position, timer);
+                    PlanResult plan;
+                    try
+                    {
+                        plan = needsPlan ? ChooseBoardPlan(position, timer, recovering)
+                            : ImprovePlanAfterDraw(position, timer);
+                    }
+                    finally
+                    {
+                        _recoverySearchActive = false;
+                    }
                     if (plan != null)
                     {
                         _boardPlan = plan;
@@ -312,7 +355,7 @@ namespace WindBot.Game.AI.Decks
                         TracePlanner("search-ms", timer.ElapsedMilliseconds.ToString());
                         _planStep = 0;
                         _planReturnZone = _boardPlan.ReturnZone;
-                        TracePlanner("plan", string.Join(" ", _boardPlan.Score, _boardPlan.States,
+                        TracePlanner("plan", string.Join(" ", TraceScore(_boardPlan.Score), _boardPlan.States,
                             _boardPlan.Cutoffs, string.Join(" ", _boardPlan.Moves)));
                         if (position.DrawEffects.Active && _boardPlan.Score <= 0)
                         {
@@ -352,6 +395,11 @@ namespace WindBot.Game.AI.Decks
             return true;
         }
 
+        protected virtual bool RoomClockOnlyForBoardSearch => false;
+
+        // Named experimental variants can rely on the duel clock and deterministic search limits.
+        private int BoardSearchDeadline(int milliseconds) => RoomClockOnlyForBoardSearch ? int.MaxValue : milliseconds;
+
         private PlanResult ImprovePlanAfterDraw(PlanPosition position, Stopwatch timer)
         {
             var remaining = _boardPlan.Moves.Skip(_planStep).ToList();
@@ -362,7 +410,7 @@ namespace WindBot.Game.AI.Decks
             {
                 var first = ComboSuccessors(position, BoardSearchPolicy.Tactical)
                     .Where(next => PlanOffered(next.Move) && MatchesCachedMove(next.Move, remaining[0])).ToList();
-                var replay = ReplayCachedOpening(first, remaining, timer, 100, requirePlacement: true,
+                var replay = ReplayCachedOpening(first, remaining, timer, BoardSearchDeadline(100), requirePlacement: true,
                     policy: BoardSearchPolicy.Tactical);
                 if (replay.Count == 0 && position.DrawEffects.Active)
                 {
@@ -381,7 +429,7 @@ namespace WindBot.Game.AI.Decks
             }
 
             var tactical = TryTacticalContinuation(position, timer, 230);
-            var candidate = FindBoard(position, PlanOffered, 96, 10000, timer, 550, BoardSearchPolicy.HoldBackrow);
+            var candidate = FindBoard(position, PlanOffered, 96, 10000, timer, BoardSearchDeadline(550), BoardSearchPolicy.HoldBackrow);
             if (tactical != null && BetterBoardPlan(tactical, candidate))
                 candidate = tactical;
             bool improved = candidate.Score > floor || candidate.Score == floor && retained != null
@@ -429,8 +477,8 @@ namespace WindBot.Game.AI.Decks
                 && Environment.GetEnvironmentVariable("TWINS_PLAN_FREEZE_OPENING") == "1";
             var tacticalPlan = recovering ? TryResourceTactics(position, timer, 650) : null;
             if (tacticalPlan != null && width == 0 && !tableEligible
-                && (tacticalPlan.Score >= 95
-                    || tacticalPlan.Score >= 75 && !position.Fresh(PlanEffect.Requiem)
+                && (tacticalPlan.Score >= 95 * ScoreUnitsPerTenth
+                    || tacticalPlan.Score >= 75 * ScoreUnitsPerTenth && !position.Fresh(PlanEffect.Requiem)
                         && !position.Has(Engraver) && !position.Grave.Contains(Engraver) && !position.Hand.Contains(Engraver)))
             {
                 TracePlanner("recovery-tactics", tacticalPlan.Score.ToString());
@@ -456,25 +504,25 @@ namespace WindBot.Game.AI.Decks
                 if (tacticalPlan != null && tacticalPlan.Score > tablePlan.Score)
                 {
                     if (sameOpening)
-                        TracePlanner("reference", tacticalPlan.Score + " " + tacticalPlan.Score + " incumbent");
+                        TracePlanner("reference", TraceScore(tacticalPlan.Score) + " " + TraceScore(tacticalPlan.Score) + " incumbent");
                     TracePlanner("tactic-plan", tacticalPlan.Score.ToString());
                     TracePlanner("policy-evaluations", tacticalPlan.States + " " + tacticalPlan.ScoreEvaluations);
                     return tacticalPlan;
                 }
                 var alternative = FindEqualPlanWithBetterPriorities(position, tablePlan, timer);
                 if (sameOpening)
-                    TracePlanner("reference", tablePlan.Score + " " + tablePlan.Score + " incumbent");
+                    TracePlanner("reference", TraceScore(tablePlan.Score) + " " + TraceScore(tablePlan.Score) + " incumbent");
                 TracePlanner("table-hit", tablePlan.Score.ToString());
                 TracePlanner("policy-evaluations", "0 0");
                 return alternative ?? tablePlan;
             }
 
-            if (!recovering && !position.DrawEffects.Active && (tacticalPlan == null || tacticalPlan.Score < 90))
+            if (!recovering && !position.DrawEffects.Active && (tacticalPlan == null || tacticalPlan.Score < 90 * ScoreUnitsPerTenth))
             {
                 var resources = TryResourceTactics(position, timer, 700);
                 if (resources != null && (tacticalPlan == null || BetterBoardPlan(resources, tacticalPlan)))
                     tacticalPlan = resources;
-                if ((tacticalPlan == null || tacticalPlan.Score < 80) && CanTryExtensionTactics(position))
+                if ((tacticalPlan == null || tacticalPlan.Score < 80 * ScoreUnitsPerTenth) && CanTryExtensionTactics(position))
                 {
                     var extension = TryResourceTactics(position, timer, 850, prioritizeExchanges: true);
                     if (extension != null && (tacticalPlan == null || BetterBoardPlan(extension, tacticalPlan)))
@@ -485,10 +533,10 @@ namespace WindBot.Game.AI.Decks
             // Compare two tactical priorities only within the foreground time budget.
             // The offline reference has its own budget and never runs in production.
             // Leave headroom for the engine response and the client's transport.
-            const int timeLimitMs = 5000;
-            int firstPassMs = recovering ? 1600 : 1250;
+            int timeLimitMs = BoardSearchDeadline(5000);
+            int firstPassMs = BoardSearchDeadline(recovering ? 1600 : 1250);
             if (tacticalPlan != null && width == 0 && !position.DrawEffects.Active
-                && (tacticalPlan.Score >= 95 || tacticalPlan.Score >= 85 && HasDesiraeControlBoard(tacticalPlan.Terminal))
+                && (tacticalPlan.Score >= 95 * ScoreUnitsPerTenth || tacticalPlan.Score >= 85 * ScoreUnitsPerTenth && HasDesiraeControlBoard(tacticalPlan.Terminal))
                 && position.Hand.All(IsTableInert)
                 && tacticalPlan.Terminal.PasswordBanishes == position.PasswordBanishes)
             {
@@ -514,7 +562,7 @@ namespace WindBot.Game.AI.Decks
             }
             // A hand trap can leave several ways to rebuild. The narrow first pass
             // can hit its state limit before finding a finish through another engine.
-            if (recovering && incumbent.Score < 85 && !position.DrawEffects.Active
+            if (recovering && incumbent.Score < 85 * ScoreUnitsPerTenth && !position.DrawEffects.Active
                 && timer.ElapsedMilliseconds < timeLimitMs - 500)
             {
                 var recovery = FindBoard(position, PlanOffered, 512, 200000, timer, timeLimitMs - 250);
@@ -539,10 +587,10 @@ namespace WindBot.Game.AI.Decks
                     }
                 }
             }
-            if (incumbent.Score < 75 && timer.ElapsedMilliseconds < timeLimitMs - 250)
+            if (incumbent.Score < 75 * ScoreUnitsPerTenth && timer.ElapsedMilliseconds < timeLimitMs - 250)
             {
-                var alternate = RefineFiendsmithFusion(incumbent, timer, Math.Min(timeLimitMs - 120,
-                    (int)timer.ElapsedMilliseconds + 350));
+                var alternate = RefineFiendsmithFusion(incumbent, timer, BoardSearchDeadline(Math.Min(timeLimitMs - 120,
+                    (int)timer.ElapsedMilliseconds + 350)));
                 if (alternate != null)
                 {
                     nodes += alternate.States;
@@ -551,11 +599,11 @@ namespace WindBot.Game.AI.Decks
                         incumbent = alternate;
                 }
             }
-            if (incumbent.Score < 68 && timer.ElapsedMilliseconds < timeLimitMs - 120)
+            if (incumbent.Score < 68 * ScoreUnitsPerTenth && timer.ElapsedMilliseconds < timeLimitMs - 120)
             {
                 if (!photoEngine)
                 {
-                    int refinementDeadline = Math.Min(timeLimitMs - 320, (int)timer.ElapsedMilliseconds + 260);
+                    int refinementDeadline = BoardSearchDeadline(Math.Min(timeLimitMs - 320, (int)timer.ElapsedMilliseconds + 260));
                     var refined = RefineEngineChoice(incumbent, timer, refinementDeadline);
                     if (refined != null)
                     {
@@ -565,7 +613,7 @@ namespace WindBot.Game.AI.Decks
                             incumbent = refined;
                     }
                 }
-                if (incumbent.Score < 68 && timer.ElapsedMilliseconds < timeLimitMs - 180)
+                if (incumbent.Score < 68 * ScoreUnitsPerTenth && timer.ElapsedMilliseconds < timeLimitMs - 180)
                 {
                     var developed = FindBoard(position, PlanOffered, 256, 45000, timer, timeLimitMs,
                         photoEngine ? BoardSearchPolicy.HoldBackrow : BoardSearchPolicy.ResourceExchange);
@@ -576,7 +624,7 @@ namespace WindBot.Game.AI.Decks
                 }
             }
             // Revisit a weak finish when the hand can still develop both engines.
-            if (!recovering && incumbent.Score < 80 && !position.DrawEffects.Active && !position.SearchLocked
+            if (!recovering && incumbent.Score < 80 * ScoreUnitsPerTenth && !position.DrawEffects.Active && !position.SearchLocked
                 && (position.Has(Engraver) || position.Hand.Contains(Engraver))
                 && position.Hand.Any(id => id == Password || id == Trouble || id == NightPhoto)
                 && timer.ElapsedMilliseconds < timeLimitMs - 500)
@@ -587,7 +635,7 @@ namespace WindBot.Game.AI.Decks
                 if (BetterBoardPlan(developed, incumbent))
                     incumbent = developed;
             }
-            if (incumbent.Score < 90 && timer.ElapsedMilliseconds < timeLimitMs - 300)
+            if (incumbent.Score < 90 * ScoreUnitsPerTenth && timer.ElapsedMilliseconds < timeLimitMs - 300)
             {
                 var fork = FindRestartFork(incumbent, timer, timeLimitMs - 300);
                 if (fork != null)
@@ -628,7 +676,7 @@ namespace WindBot.Game.AI.Decks
             _referenceSearchMs += referenceTimer.ElapsedMilliseconds;
             TracePlanner("reference-ms", referenceTimer.ElapsedMilliseconds.ToString());
             bool improved = additional != null && BetterBoardPlan(additional, incumbent);
-            TracePlanner("reference", string.Join(" ", incumbent.Score, additional?.Score ?? incumbent.Score,
+            TracePlanner("reference", string.Join(" ", TraceScore(incumbent.Score), TraceScore(additional?.Score ?? incumbent.Score),
                 improved ? "additional" : "incumbent"));
             var selected = improved ? additional : incumbent;
             if (tableEligible && Environment.GetEnvironmentVariable("TWINS_PLAN_EXPORT") == "1")
@@ -739,10 +787,10 @@ namespace WindBot.Game.AI.Decks
                 && position.Extra.Contains(Requiem) && known.Terminal?.EarlyRequiem != true;
             bool canImproveCaesarTiming = known.Moves.Any(move => move.Type == ExecutorType.SpSummon && move.Card == Caesar);
             if ((!usesSearch && !downgrades && !usesPhoto && !sendsTwin && !canImproveRequiemTiming && !canImproveCaesarTiming)
-                || timer.ElapsedMilliseconds >= 400)
+                || timer.ElapsedMilliseconds >= BoardSearchDeadline(400))
                 return null;
             var policy = usesSearch || downgrades || sendsTwin ? BoardSearchPolicy.HoldBackrow : BoardSearchPolicy.PreservePhoto;
-            var alternative = FindBoard(position, PlanOffered, 96, 12000, timer, known.Terminal == null ? 330 : 400, policy);
+            var alternative = FindBoard(position, PlanOffered, 96, 12000, timer, BoardSearchDeadline(known.Terminal == null ? 330 : 400), policy);
             TracePlanner("policy-evaluations", alternative.States + " " + alternative.ScoreEvaluations);
             if (alternative.Score != known.Score || alternative.Moves.Count == 0)
                 return null;
@@ -754,7 +802,7 @@ namespace WindBot.Game.AI.Decks
                 if (opening == 0)
                 {
                     var first = ComboSuccessors(position).Where(next => PlanOffered(next.Move)).ToList();
-                    var replay = ReplayCachedOpening(first, known.Moves, timer, 400);
+                    var replay = ReplayCachedOpening(first, known.Moves, timer, BoardSearchDeadline(400));
                     if (replay.Count == 0 || !PreferEnd(alternative.Terminal, replay[0]))
                         return null;
                 }
@@ -1232,6 +1280,8 @@ namespace WindBot.Game.AI.Decks
             _planReturnZone = -1;
             _planStopped = _planInterrupted = _planDealLinked = _planTwins = _planFiends = _planOtherInterference = _planInventoryChanged = false;
             _planDrawPending = false;
+            _confirmedRecovery = _recoverySearchActive = false;
+            _opponentRemovalLink = _recoveryFrontiers = 0;
             _planUsed = 0;
             _moonDrawPressure = _settleDrawPressure = _finishWithBackrow = false;
             _moonDrawOnly = null;
@@ -1245,6 +1295,19 @@ namespace WindBot.Game.AI.Decks
 
         private void PlanChainEnded()
         {
+            if (RecoveryModelRequested && InBoardBuildPhase)
+            {
+                var chain = Duel.CurrentChainInfo;
+                for (int i = chain.Count - 1; i > 0; --i)
+                    if (chain[i].ActivatePlayer == 1 && !Duel.NegatedChainIndexList.Contains(i + 1))
+                    {
+                        if (Duel.NegatedChainIndexList.Any(link => link > 0 && link <= i
+                            && chain[link - 1].ActivatePlayer == 0))
+                            ConfirmRecovery("own-effect-negated");
+                        break;
+                    }
+            }
+            _opponentRemovalLink = 0;
             _planActivations.Clear();
             _planPayment = null;
         }
@@ -1256,8 +1319,14 @@ namespace WindBot.Game.AI.Decks
             // Compare the terminal projection with the server's positions after End Phase returns.
             _returningAbao = null;
             var observed = LivePlanPosition();
-            TracePlanner("observed", EndBoardScore(observed, true) + " "
+            TracePlanner("observed", TraceScore(EndBoardScore(observed, true)) + " "
                 + string.Join(",", observed.Field) + " " + observed.Set + " " + observed.Draws);
+            TracePlanner("observed-priorities", string.Join(" ", TwinSearchesUsed(observed),
+                HasPhotoDefense(observed) ? 1 : 0, HasRequiemDefense(observed) ? 1 : 0,
+                observed.EarlyRequiem ? 1 : 0, observed.PasswordBanishes, UsedPhoto(observed) ? 1 : 0));
+            TracePlanner("branch-frontiers", _trainedFrontiers.ToString());
+            TracePlanner("recovery-frontiers", _recoveryFrontiers.ToString());
+            _trainedFrontiers = 0;
         }
     }
 }

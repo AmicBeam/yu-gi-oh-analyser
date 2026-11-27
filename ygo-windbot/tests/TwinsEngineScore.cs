@@ -34,6 +34,7 @@ internal static class TwinsEngineScore
     private static readonly Type PositionType = ExecutorType.GetNestedType("PlanPosition", BindingFlags.NonPublic);
     private static readonly Type MoveType = ExecutorType.GetNestedType("PlanMove", BindingFlags.NonPublic);
     private static readonly MethodInfo Score = ExecutorType.GetMethod("EndBoardScore", Hidden);
+    private static readonly MethodInfo TraceScore = ExecutorType.GetMethod("TraceScore", Hidden);
     private static readonly MethodInfo Capture = ExecutorType.GetMethod("CaptureNibiruWindow", Hidden);
     private static readonly MethodInfo PlanFlag = ExecutorType.GetMethod("PlanFlag", Hidden);
     private static readonly MethodInfo TrapBit = ExecutorType.GetMethod("TrapBit", Hidden);
@@ -121,7 +122,8 @@ internal static class TwinsEngineScore
                     foreach (string flag in new[] { "RequiemDefenseAtNibiruWindow", "PhotoAtNibiruWindow" })
                         Set(terminal, flag, PositionType.GetField(flag).GetValue(window));
                 }
-                Console.WriteLine(Score.Invoke(executor, new[] { terminal, (object)true }));
+                var score = Score.Invoke(executor, new[] { terminal, (object)true });
+                Console.WriteLine(TraceScore == null ? score : TraceScore.Invoke(null, new[] { score }));
             }
         }
     }

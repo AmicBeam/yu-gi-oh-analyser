@@ -316,9 +316,9 @@ def prepare_fixture(work, fixture, windbot, bots, port, bot_port):
 
 def play(work, output, label, seat, port, bot_port, width=None, states=None, *,
          second=False, opponent_monster=0, ash_target=0, export_table=False, check_opponent_turn=False,
-         interference=None, reference_ms=10000):
+         interference=None, reference_ms=10000, env=None):
     log = output / (label + ".log")
-    variables = dict(os.environ, NODE_PATH=str(work / "node_modules"), TWINS_PLAN_TRACE="1")
+    variables = dict(os.environ if env is None else env, NODE_PATH=str(work / "node_modules"), TWINS_PLAN_TRACE="1")
     for flag in ("TWINS_PLAN_WIDTH", "TWINS_PLAN_STATES", "TWINS_PLAN_REFERENCE_MS",
                  "TWINS_PLAN_FREEZE_OPENING", "TWINS_PLAN_EXPORT"):
         variables.pop(flag, None)
@@ -357,12 +357,13 @@ def play(work, output, label, seat, port, bot_port, width=None, states=None, *,
             raise RuntimeError(result.stderr.strip())
     (output / (label + ".json")).write_text(result.stdout, encoding="utf-8")
     transcript = log.read_text(encoding="utf-8").rsplit("Duel started:", 1)[-1]
-    observed = re.findall(r"TwinsPlan observed (\d+) ([\d,]+) (\d+) (\d+)", transcript)
-    projected = re.findall(r"TwinsPlan plan (\d+) (\d+) (\d+)", transcript)
+    score_pattern = r"(-?\d+(?:\.\d+)?)"
+    observed = re.findall(rf"TwinsPlan observed {score_pattern} ([\d,]+) (\d+) (\d+)", transcript)
+    projected = re.findall(rf"TwinsPlan plan {score_pattern} (\d+) (\d+)", transcript)
     if not observed or not projected:
         raise RuntimeError(f"missing planner observations in {log}")
     score, board, traps, draws = observed[-1]
-    if ash_target and ("TwinsPlan recovery opponent-chain" not in transcript or int(score) <= 32):
+    if ash_target and ("TwinsPlan recovery opponent-chain" not in transcript or float(score) <= 32):
         raise RuntimeError(f"the fixture did not recover to a stronger board in {log}")
     prediction, visited, cutoffs = projected[0]
     trace = json.loads(result.stdout)
@@ -405,12 +406,12 @@ def play(work, output, label, seat, port, bot_port, width=None, states=None, *,
     if second and opponent_monster:
         if not any(event[:4] == ["Move", opponent_monster, 4, 16] for event in trace[:turns[2]]):
             raise RuntimeError(f"the test monster was not cleared in {log}")
-    reference = re.search(r"TwinsPlan reference (\d+) (\d+) (\w+)", transcript)
+    reference = re.search(rf"TwinsPlan reference {score_pattern} {score_pattern} (\w+)", transcript)
     if width is not None:
         if not reference:
             raise RuntimeError(f"missing reference candidate scores in {log}")
         base_score, wide_score, selected = reference.groups()
-        if int(prediction) != max(int(base_score), int(wide_score)):
+        if float(prediction) != max(float(base_score), float(wide_score)):
             raise RuntimeError(f"reference dropped a candidate in {log}")
     search_times = list(map(int, re.findall(r"TwinsPlan search-ms (\d+)", transcript)))
     evaluations = re.findall(r"TwinsPlan policy-evaluations (\d+) (\d+)", transcript)
@@ -420,7 +421,7 @@ def play(work, output, label, seat, port, bot_port, width=None, states=None, *,
         table_entries = [json.loads(line.split(" ", 2)[2]) for line in transcript.splitlines()
                          if line.startswith("TwinsPlan table-entry ")]
     return {
-        "score": int(score) / 10, "projected": int(prediction) / 10, "states": int(visited),
+        "score": round(float(score) / 10, 3), "projected": round(float(prediction) / 10, 3), "states": int(visited),
         "pruned": int(cutoffs), "search_ms": sum(search_times),
         "reference_search_ms": sum(map(int, re.findall(r"TwinsPlan reference-ms (\d+)", transcript))),
         "policy_nodes": sum(int(nodes) for nodes, _ in evaluations),
@@ -438,7 +439,7 @@ def play(work, output, label, seat, port, bot_port, width=None, states=None, *,
         "placement_mismatches": transcript.count("TwinsPlan placement-mismatch "),
         "draws": max(0, sum(entry[0] == "Draw" for entry in trace[turns[turn_index]:turns[turn_index + 1]]) - int(second)),
         "phase": window.group(2), "normal_used": bool(int(window.group(3))), "used_effect_mask": int(window.group(4)),
-        **({"incumbent_projected": int(base_score) / 10, "wide_only_projected": int(wide_score) / 10,
+        **({"incumbent_projected": round(float(base_score) / 10, 3), "wide_only_projected": round(float(wide_score) / 10, 3),
             "selected": selected} if reference else {}),
         "planner_draws": int(draws), "board": list(map(int, board.split(","))), "traps": int(traps),
         **({"opponent_turn": opponent_turn} if check_opponent_turn else {}),
@@ -590,7 +591,7 @@ def main():
                         # A real-time cutoff can stop the two shared planner runs at different nodes.
                         entry["incumbent_delta"] = round(
                             entry["reference"]["incumbent_projected"] - entry["bot"]["projected"], 1)
-                    entry["raw_gap"] = round(entry["reference"]["score"] - entry["bot"]["score"], 1)
+                    entry["raw_gap"] = round(entry["reference"]["score"] - entry["bot"]["score"], 3)
                     entry["gap"] = max(0.0, entry["raw_gap"])
                 if args.opening_ut:
                     entry["opening_ut"] = opening_ut_target(entry, name, case_ash)
@@ -602,7 +603,7 @@ def main():
         for duel in report:
             for entry in duel["reference"].get("table_entries", []):
                 old = best_entries.get(entry["Key"])
-                if duel["reference"]["score"] * 10 < entry["Score"]:
+                if duel["reference"]["score"] < entry["Score"] / (1000 if entry["Version"] >= 3 else 10):
                     continue
                 if old is None or entry["Score"] > old["Score"]:
                     best_entries[entry["Key"]] = entry

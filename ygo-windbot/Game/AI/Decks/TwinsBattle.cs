@@ -316,7 +316,7 @@ namespace WindBot.Game.AI.Decks
                         return AI.Attack(attacker, target);
                 }
             }
-            return base.OnBattle(attackers, defenders);
+            return TrySecondTurnAttack(attackers, defenders) ?? base.OnBattle(attackers, defenders);
         }
     }
 }

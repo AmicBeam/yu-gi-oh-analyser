@@ -1,0 +1,21 @@
+{
+  "hands": 28,
+  "by_scenario": {
+    "clean": 13,
+    "nibiru": 3,
+    "ash": 2,
+    "dragon": 2,
+    "droll": 3,
+    "ogre": 2,
+    "imperm": 2,
+    "belle": 1
+  },
+  "pairs": 697,
+  "fit_accuracy": 0.7719,
+  "windbot_sha256": "a66dbc6cb2cb58cd3ab67a12d62f4518b6f4f882aafa20dc585330f7dfb2e576",
+  "cards_sha256": "979b7aaa6356bd7bd8f1126c97394073723dbcda89164901c5dc4eb6391dee53",
+  "pairs_by_source": {
+    "first-turn": 483,
+    "first-guided-confirmed": 214
+  }
+}

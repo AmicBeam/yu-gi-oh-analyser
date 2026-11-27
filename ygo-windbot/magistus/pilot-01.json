@@ -1,0 +1,2909 @@
+{
+  "windows_run": "D:/codex-experiments/ygoat-magistus-20261127/runs/pilot-01",
+  "seed_count": 24,
+  "seed_openings": 12,
+  "holdout_openings": 12,
+  "manifest": {
+    "signature": "865ede76d6d487a365a2b9d64ebe8dea0fdab3bb24aa67834efc9afc837ca15c",
+    "attempts": 36,
+    "budget": 3300,
+    "perStratum": 5,
+    "seed_count": 24
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "generated": 30,
+      "retained": 14,
+      "settled": 30,
+      "multi_trap_activated": 17,
+      "coverage": {
+        "0": 5,
+        "1": 5,
+        "2": 5,
+        "3": 5,
+        "4": 5,
+        "5": 5
+      },
+      "evaluation": {
+        "before": {
+          "score": 29,
+          "draws": 2,
+          "reward": 29,
+          "missing": 0
+        },
+        "after": {
+          "score": 93,
+          "draws": 3,
+          "reward": 93,
+          "missing": 0
+        },
+        "promote": false,
+        "evidence": [
+          {
+            "id": "0-0",
+            "count": 0,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 0,
+                "traps": [],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  23434538
+                ],
+                "summons": 1,
+                "traps": [],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "0-1",
+            "count": 0,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  34755994
+                ],
+                "summons": 2,
+                "traps": [],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 10,
+                "lost": 1,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  46986414
+                ],
+                "summons": 10,
+                "traps": [],
+                "nibiru_stopped": false,
+                "reward": 10
+              }
+            }
+          },
+          {
+            "id": "1-0",
+            "count": 1,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 2,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 2,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "1-1",
+            "count": 1,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 10,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  27548199,
+                  34755994
+                ],
+                "summons": 10,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    8
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 10
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 10,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 1,
+                "board": [
+                  27548199,
+                  100274004,
+                  83810690
+                ],
+                "summons": 9,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 10
+              }
+            }
+          },
+          {
+            "id": "2-0",
+            "count": 2,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 1,
+                "board": [
+                  27548199,
+                  83810690
+                ],
+                "summons": 12,
+                "traps": [
+                  [
+                    40366667,
+                    22623509,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 19,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  27548199,
+                  37260677,
+                  34755994
+                ],
+                "summons": 16,
+                "traps": [
+                  [
+                    97268402,
+                    36099130,
+                    1
+                  ],
+                  [
+                    40366667,
+                    34041788,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 19
+              }
+            }
+          },
+          {
+            "id": "2-1",
+            "count": 2,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 10,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 1,
+                "board": [
+                  27548199,
+                  66532962
+                ],
+                "summons": 9,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 10
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 20,
+                "lost": 1,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  27548199
+                ],
+                "summons": 14,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ],
+                  [
+                    73642296,
+                    36099130,
+                    2
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 20
+              }
+            }
+          },
+          {
+            "id": "3-0",
+            "count": 3,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 1,
+                "own_draws": 0,
+                "board": [
+                  42141493
+                ],
+                "summons": 1,
+                "traps": [
+                  [
+                    84192580,
+                    39123673,
+                    0
+                  ],
+                  [
+                    97045737,
+                    38943357,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 1,
+                "own_draws": 0,
+                "board": [
+                  20714553
+                ],
+                "summons": 3,
+                "traps": [
+                  [
+                    84192580,
+                    39123673,
+                    0
+                  ],
+                  [
+                    97045737,
+                    100274003,
+                    0
+                  ],
+                  [
+                    10045474,
+                    36099130,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "3-1",
+            "count": 3,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 9,
+                "lost": 0,
+                "extra": 0,
+                "draws": 1,
+                "own_draws": 0,
+                "board": [
+                  100274004,
+                  37260677,
+                  23434538
+                ],
+                "summons": 3,
+                "traps": [
+                  [
+                    42141493,
+                    0,
+                    0
+                  ],
+                  [
+                    59438930,
+                    22623509,
+                    2
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 9
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 9,
+                "lost": 0,
+                "extra": 0,
+                "draws": 1,
+                "own_draws": 0,
+                "board": [
+                  37260677,
+                  100274004
+                ],
+                "summons": 3,
+                "traps": [
+                  [
+                    42141493,
+                    0,
+                    0
+                  ],
+                  [
+                    59438930,
+                    22623509,
+                    2
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 9
+              }
+            }
+          },
+          {
+            "id": "4-0",
+            "count": 4,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 1,
+                "board": [
+                  581014
+                ],
+                "summons": 8,
+                "traps": [
+                  [
+                    14558127,
+                    100274003,
+                    0
+                  ],
+                  [
+                    40366667,
+                    73664385,
+                    0
+                  ],
+                  [
+                    10045474,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 25,
+                "lost": 2,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  66532962
+                ],
+                "summons": 18,
+                "traps": [
+                  [
+                    14558127,
+                    100274003,
+                    0
+                  ],
+                  [
+                    40366667,
+                    73664385,
+                    0
+                  ],
+                  [
+                    10045474,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 25
+              }
+            }
+          },
+          {
+            "id": "4-1",
+            "count": 4,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 0,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    42141493,
+                    0,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 0,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    42141493,
+                    0,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "5-0",
+            "count": 5,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 0,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    23434538,
+                    14558127,
+                    0
+                  ],
+                  [
+                    42141493,
+                    0,
+                    0
+                  ],
+                  [
+                    97045737,
+                    100274003,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 1,
+                "own_draws": 0,
+                "board": [
+                  42544773
+                ],
+                "summons": 1,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    23434538,
+                    14558127,
+                    0
+                  ],
+                  [
+                    42141493,
+                    0,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "5-1",
+            "count": 5,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 0,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    23434538,
+                    0,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  42141493
+                ],
+                "summons": 0,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    23434538,
+                    0,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "round": 2,
+      "generated": 30,
+      "retained": 13,
+      "settled": 30,
+      "multi_trap_activated": 16,
+      "coverage": {
+        "0": 5,
+        "1": 5,
+        "2": 5,
+        "3": 5,
+        "4": 5,
+        "5": 5
+      },
+      "evaluation": {
+        "before": {
+          "score": 29,
+          "draws": 2,
+          "reward": 29,
+          "missing": 0
+        },
+        "after": {
+          "score": 85,
+          "draws": 9,
+          "reward": 64,
+          "missing": 0
+        },
+        "promote": false,
+        "evidence": [
+          {
+            "id": "0-0",
+            "count": 0,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 0,
+                "traps": [],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  23434538
+                ],
+                "summons": 1,
+                "traps": [],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "0-1",
+            "count": 0,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  34755994
+                ],
+                "summons": 2,
+                "traps": [],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 10,
+                "lost": 1,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 9,
+                "traps": [],
+                "nibiru_stopped": false,
+                "reward": 10
+              }
+            }
+          },
+          {
+            "id": "1-0",
+            "count": 1,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 2,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 2,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "1-1",
+            "count": 1,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 10,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  27548199,
+                  34755994
+                ],
+                "summons": 10,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    8
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 10
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 45,
+                "lost": 3,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  27519978
+                ],
+                "summons": 21,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 45
+              }
+            }
+          },
+          {
+            "id": "2-0",
+            "count": 2,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 1,
+                "board": [
+                  27548199,
+                  83810690
+                ],
+                "summons": 12,
+                "traps": [
+                  [
+                    40366667,
+                    22623509,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 10,
+                "lost": 1,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 12,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ],
+                  [
+                    40366667,
+                    34041788,
+                    2
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 10
+              }
+            }
+          },
+          {
+            "id": "2-1",
+            "count": 2,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 10,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 1,
+                "board": [
+                  27548199,
+                  66532962
+                ],
+                "summons": 9,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 10
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 10,
+                "lost": 1,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 1,
+                "board": [
+                  66532962
+                ],
+                "summons": 13,
+                "traps": [
+                  [
+                    97268402,
+                    36099130,
+                    1
+                  ],
+                  [
+                    73642296,
+                    100278018,
+                    7
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 10
+              }
+            }
+          },
+          {
+            "id": "3-0",
+            "count": 3,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 1,
+                "own_draws": 0,
+                "board": [
+                  42141493
+                ],
+                "summons": 1,
+                "traps": [
+                  [
+                    84192580,
+                    39123673,
+                    0
+                  ],
+                  [
+                    97045737,
+                    38943357,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 1,
+                "own_draws": 0,
+                "board": [
+                  20714553
+                ],
+                "summons": 3,
+                "traps": [
+                  [
+                    84192580,
+                    39123673,
+                    0
+                  ],
+                  [
+                    97045737,
+                    100274003,
+                    0
+                  ],
+                  [
+                    10045474,
+                    36099130,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "3-1",
+            "count": 3,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 9,
+                "lost": 0,
+                "extra": 0,
+                "draws": 1,
+                "own_draws": 0,
+                "board": [
+                  100274004,
+                  37260677,
+                  23434538
+                ],
+                "summons": 3,
+                "traps": [
+                  [
+                    42141493,
+                    0,
+                    0
+                  ],
+                  [
+                    59438930,
+                    22623509,
+                    2
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 9
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  100274004
+                ],
+                "summons": 2,
+                "traps": [
+                  [
+                    42141493,
+                    0,
+                    0
+                  ],
+                  [
+                    59438930,
+                    22623509,
+                    2
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "4-0",
+            "count": 4,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 1,
+                "board": [
+                  581014
+                ],
+                "summons": 8,
+                "traps": [
+                  [
+                    14558127,
+                    100274003,
+                    0
+                  ],
+                  [
+                    40366667,
+                    73664385,
+                    0
+                  ],
+                  [
+                    10045474,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 10,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  27548199,
+                  20714553
+                ],
+                "summons": 9,
+                "traps": [
+                  [
+                    14558127,
+                    100274003,
+                    0
+                  ],
+                  [
+                    40366667,
+                    73664385,
+                    0
+                  ],
+                  [
+                    10045474,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 10
+              }
+            }
+          },
+          {
+            "id": "4-1",
+            "count": 4,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 0,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    42141493,
+                    0,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 0,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    42141493,
+                    0,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "5-0",
+            "count": 5,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 0,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    23434538,
+                    14558127,
+                    0
+                  ],
+                  [
+                    42141493,
+                    0,
+                    0
+                  ],
+                  [
+                    97045737,
+                    100274003,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 8,
+                "own_draws": 0,
+                "board": [
+                  66532962
+                ],
+                "summons": 5,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    23434538,
+                    14558127,
+                    0
+                  ],
+                  [
+                    42141493,
+                    0,
+                    0
+                  ],
+                  [
+                    97045737,
+                    100274003,
+                    4
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": -21
+              }
+            }
+          },
+          {
+            "id": "5-1",
+            "count": 5,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 0,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    23434538,
+                    0,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  42141493
+                ],
+                "summons": 0,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    23434538,
+                    0,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "round": 3,
+      "generated": 30,
+      "retained": 17,
+      "settled": 30,
+      "multi_trap_activated": 20,
+      "coverage": {
+        "0": 5,
+        "1": 5,
+        "2": 5,
+        "3": 5,
+        "4": 5,
+        "5": 5
+      },
+      "evaluation": {
+        "before": {
+          "score": 29,
+          "draws": 2,
+          "reward": 29,
+          "missing": 0
+        },
+        "after": {
+          "score": 100,
+          "draws": 4,
+          "reward": 94,
+          "missing": 0
+        },
+        "promote": false,
+        "evidence": [
+          {
+            "id": "0-0",
+            "count": 0,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 0,
+                "traps": [],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  23434538
+                ],
+                "summons": 1,
+                "traps": [],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "0-1",
+            "count": 0,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  34755994
+                ],
+                "summons": 2,
+                "traps": [],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 1,
+                "board": [
+                  581014
+                ],
+                "summons": 10,
+                "traps": [],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "1-0",
+            "count": 1,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 2,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 2,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "1-1",
+            "count": 1,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 10,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  27548199,
+                  34755994
+                ],
+                "summons": 10,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    8
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 10
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 45,
+                "lost": 3,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  66532962
+                ],
+                "summons": 19,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 45
+              }
+            }
+          },
+          {
+            "id": "2-0",
+            "count": 2,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 1,
+                "board": [
+                  27548199,
+                  83810690
+                ],
+                "summons": 12,
+                "traps": [
+                  [
+                    40366667,
+                    22623509,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 10,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  27548199
+                ],
+                "summons": 9,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ],
+                  [
+                    40366667,
+                    34041788,
+                    2
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 10
+              }
+            }
+          },
+          {
+            "id": "2-1",
+            "count": 2,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 10,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 1,
+                "board": [
+                  27548199,
+                  66532962
+                ],
+                "summons": 9,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 10
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 45,
+                "lost": 3,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  27519978
+                ],
+                "summons": 17,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ],
+                  [
+                    73642296,
+                    36099130,
+                    4
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 45
+              }
+            }
+          },
+          {
+            "id": "3-0",
+            "count": 3,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 1,
+                "own_draws": 0,
+                "board": [
+                  42141493
+                ],
+                "summons": 1,
+                "traps": [
+                  [
+                    84192580,
+                    39123673,
+                    0
+                  ],
+                  [
+                    97045737,
+                    38943357,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 1,
+                "own_draws": 0,
+                "board": [
+                  20714553
+                ],
+                "summons": 3,
+                "traps": [
+                  [
+                    84192580,
+                    39123673,
+                    0
+                  ],
+                  [
+                    97045737,
+                    100274003,
+                    0
+                  ],
+                  [
+                    10045474,
+                    36099130,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "3-1",
+            "count": 3,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 9,
+                "lost": 0,
+                "extra": 0,
+                "draws": 1,
+                "own_draws": 0,
+                "board": [
+                  100274004,
+                  37260677,
+                  23434538
+                ],
+                "summons": 3,
+                "traps": [
+                  [
+                    42141493,
+                    0,
+                    0
+                  ],
+                  [
+                    59438930,
+                    22623509,
+                    2
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 9
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  100274004
+                ],
+                "summons": 2,
+                "traps": [
+                  [
+                    42141493,
+                    0,
+                    0
+                  ],
+                  [
+                    59438930,
+                    22623509,
+                    2
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "4-0",
+            "count": 4,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 1,
+                "board": [
+                  581014
+                ],
+                "summons": 8,
+                "traps": [
+                  [
+                    14558127,
+                    100274003,
+                    0
+                  ],
+                  [
+                    40366667,
+                    73664385,
+                    0
+                  ],
+                  [
+                    10045474,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  34755994
+                ],
+                "summons": 2,
+                "traps": [
+                  [
+                    40366667,
+                    22623509,
+                    0
+                  ],
+                  [
+                    14558127,
+                    73664385,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "4-1",
+            "count": 4,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 0,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    42141493,
+                    0,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 0,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    42141493,
+                    0,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "5-0",
+            "count": 5,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 0,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    23434538,
+                    14558127,
+                    0
+                  ],
+                  [
+                    42141493,
+                    0,
+                    0
+                  ],
+                  [
+                    97045737,
+                    100274003,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 3,
+                "own_draws": 0,
+                "board": [
+                  27548199
+                ],
+                "summons": 3,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    23434538,
+                    14558127,
+                    0
+                  ],
+                  [
+                    42141493,
+                    0,
+                    0
+                  ],
+                  [
+                    97045737,
+                    100274003,
+                    3
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": -6
+              }
+            }
+          },
+          {
+            "id": "5-1",
+            "count": 5,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 0,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    23434538,
+                    0,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  97268402
+                ],
+                "summons": 0,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    23434538,
+                    0,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "round": 4,
+      "generated": 30,
+      "retained": 17,
+      "settled": 30,
+      "multi_trap_activated": 19,
+      "coverage": {
+        "0": 5,
+        "1": 5,
+        "2": 5,
+        "3": 5,
+        "4": 5,
+        "5": 5
+      },
+      "evaluation": {
+        "before": {
+          "score": 29,
+          "draws": 2,
+          "reward": 29,
+          "missing": 0
+        },
+        "after": {
+          "score": 85,
+          "draws": 2,
+          "reward": 85,
+          "missing": 0
+        },
+        "promote": true,
+        "evidence": [
+          {
+            "id": "0-0",
+            "count": 0,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 0,
+                "traps": [],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  23434538
+                ],
+                "summons": 1,
+                "traps": [],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "0-1",
+            "count": 0,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  34755994
+                ],
+                "summons": 2,
+                "traps": [],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 10,
+                "lost": 1,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 1,
+                "board": [],
+                "summons": 9,
+                "traps": [],
+                "nibiru_stopped": false,
+                "reward": 10
+              }
+            }
+          },
+          {
+            "id": "1-0",
+            "count": 1,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 2,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 2,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "1-1",
+            "count": 1,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 10,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  27548199,
+                  34755994
+                ],
+                "summons": 10,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    8
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 10
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 55,
+                "lost": 3,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 1,
+                "board": [
+                  27548199,
+                  27519978
+                ],
+                "summons": 21,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 55
+              }
+            }
+          },
+          {
+            "id": "2-0",
+            "count": 2,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 1,
+                "board": [
+                  27548199,
+                  83810690
+                ],
+                "summons": 12,
+                "traps": [
+                  [
+                    40366667,
+                    22623509,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 10,
+                "lost": 1,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 2,
+                "board": [
+                  20714553
+                ],
+                "summons": 15,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ],
+                  [
+                    40366667,
+                    34041788,
+                    2
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 10
+              }
+            }
+          },
+          {
+            "id": "2-1",
+            "count": 2,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 10,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 1,
+                "board": [
+                  27548199,
+                  66532962
+                ],
+                "summons": 9,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 10
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 10,
+                "lost": 1,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  20714553
+                ],
+                "summons": 11,
+                "traps": [
+                  [
+                    97268402,
+                    22623509,
+                    1
+                  ],
+                  [
+                    73642296,
+                    36099130,
+                    4
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 10
+              }
+            }
+          },
+          {
+            "id": "3-0",
+            "count": 3,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 1,
+                "own_draws": 0,
+                "board": [
+                  42141493
+                ],
+                "summons": 1,
+                "traps": [
+                  [
+                    84192580,
+                    39123673,
+                    0
+                  ],
+                  [
+                    97045737,
+                    38943357,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 1,
+                "own_draws": 0,
+                "board": [
+                  42141493
+                ],
+                "summons": 1,
+                "traps": [
+                  [
+                    84192580,
+                    39123673,
+                    0
+                  ],
+                  [
+                    97045737,
+                    38943357,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "3-1",
+            "count": 3,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 9,
+                "lost": 0,
+                "extra": 0,
+                "draws": 1,
+                "own_draws": 0,
+                "board": [
+                  100274004,
+                  37260677,
+                  23434538
+                ],
+                "summons": 3,
+                "traps": [
+                  [
+                    42141493,
+                    0,
+                    0
+                  ],
+                  [
+                    59438930,
+                    22623509,
+                    2
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 9
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  100274004
+                ],
+                "summons": 2,
+                "traps": [
+                  [
+                    42141493,
+                    0,
+                    0
+                  ],
+                  [
+                    59438930,
+                    22623509,
+                    2
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "4-0",
+            "count": 4,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 1,
+                "board": [
+                  581014
+                ],
+                "summons": 8,
+                "traps": [
+                  [
+                    14558127,
+                    100274003,
+                    0
+                  ],
+                  [
+                    40366667,
+                    73664385,
+                    0
+                  ],
+                  [
+                    10045474,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 1,
+                "board": [
+                  581014
+                ],
+                "summons": 9,
+                "traps": [
+                  [
+                    14558127,
+                    100274003,
+                    0
+                  ],
+                  [
+                    40366667,
+                    73664385,
+                    0
+                  ],
+                  [
+                    10045474,
+                    22623509,
+                    1
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "4-1",
+            "count": 4,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 0,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    42141493,
+                    0,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 0,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    42141493,
+                    0,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "5-0",
+            "count": 5,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 0,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    23434538,
+                    14558127,
+                    0
+                  ],
+                  [
+                    42141493,
+                    0,
+                    0
+                  ],
+                  [
+                    97045737,
+                    100274003,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 1,
+                "own_draws": 0,
+                "board": [
+                  42544773
+                ],
+                "summons": 1,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    23434538,
+                    14558127,
+                    0
+                  ],
+                  [
+                    42141493,
+                    0,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          },
+          {
+            "id": "5-1",
+            "count": 5,
+            "before": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [],
+                "summons": 0,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    23434538,
+                    0,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            },
+            "after": {
+              "attempts": 10,
+              "unsupported": 0,
+              "result": {
+                "score": 0,
+                "lost": 0,
+                "extra": 0,
+                "draws": 0,
+                "own_draws": 0,
+                "board": [
+                  97268402
+                ],
+                "summons": 0,
+                "traps": [
+                  [
+                    84192580,
+                    0,
+                    0
+                  ],
+                  [
+                    23434538,
+                    0,
+                    0
+                  ]
+                ],
+                "nibiru_stopped": false,
+                "reward": 0
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "incumbent_round": 4
+}

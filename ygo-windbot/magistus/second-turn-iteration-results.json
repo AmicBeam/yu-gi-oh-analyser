@@ -1,0 +1,332 @@
+{
+  "deck": "AI_Magistus.ydk",
+  "model_sha256": "d9df78c5abbb5b9a299f17c7113df117fac5b55c5943fb37e3c1cb3aa120e4bd",
+  "previous_model_ablation": {
+    "allPhases": {
+      "settled": 50,
+      "wins": 5,
+      "clears": 58,
+      "damage": 67950,
+      "main2": 45
+    },
+    "main1Only": {
+      "settled": 50,
+      "wins": 5,
+      "clears": 59,
+      "damage": 74400,
+      "main2": 45
+    },
+    "prior": {
+      "settled": 50,
+      "wins": 4,
+      "clears": 65,
+      "damage": 83275,
+      "main2": 46
+    }
+  },
+  "iterations": {
+    "continuation": {
+      "status": "completed",
+      "method": "rule-continuation",
+      "genericBoards": 26,
+      "heldoutGenericBoards": 12,
+      "started": "2026-11-26T19:30:24.817Z",
+      "deadline": "2026-11-26T19:36:24.817Z",
+      "cases": 2167,
+      "attempts": 45163,
+      "settled": 44976,
+      "wins": 3891,
+      "main2": 41039,
+      "interrupted": 44707,
+      "effects": 1851,
+      "verified": 2143,
+      "pairs": 16900,
+      "unsupported": {},
+      "selected": "medium",
+      "baseline": {
+        "settled": 100,
+        "wins": 1,
+        "clears": 84,
+        "damage": 26025,
+        "main2": 77
+      },
+      "prior": {
+        "settled": 100,
+        "wins": 7,
+        "clears": 124,
+        "damage": 136125,
+        "main2": 93
+      },
+      "trained": {
+        "settled": 100,
+        "wins": 10,
+        "clears": 131,
+        "damage": 159775,
+        "main2": 90
+      },
+      "gain": {
+        "baseline": [
+          60,
+          9
+        ],
+        "prior": [
+          28,
+          12
+        ]
+      },
+      "genericHoldout": {
+        "cases": 58,
+        "prior": {
+          "settled": 58,
+          "wins": 3,
+          "clears": 63,
+          "damage": 48650,
+          "main2": 55
+        },
+        "trained": {
+          "settled": 58,
+          "wins": 5,
+          "clears": 68,
+          "damage": 63500,
+          "main2": 53
+        },
+        "delta": 7
+      },
+      "promoted": false
+    },
+    "combat": {
+      "status": "completed",
+      "method": "rule-continuation",
+      "combat": "public-plan",
+      "genericBoards": 26,
+      "heldoutGenericBoards": 12,
+      "started": "2026-11-26T19:37:37.595Z",
+      "deadline": "2026-11-26T19:43:37.595Z",
+      "cases": 1997,
+      "attempts": 40369,
+      "settled": 40216,
+      "wins": 4267,
+      "main2": 35920,
+      "interrupted": 39989,
+      "effects": 1611,
+      "verified": 1973,
+      "pairs": 15117,
+      "unsupported": {},
+      "selected": "medium",
+      "baseline": {
+        "settled": 99,
+        "wins": 2,
+        "clears": 62,
+        "damage": 16250,
+        "main2": 65
+      },
+      "prior": {
+        "settled": 99,
+        "wins": 5,
+        "clears": 114,
+        "damage": 89200,
+        "main2": 94
+      },
+      "trained": {
+        "settled": 99,
+        "wins": 14,
+        "clears": 125,
+        "damage": 150100,
+        "main2": 85
+      },
+      "gain": {
+        "baseline": [
+          63,
+          9
+        ],
+        "prior": [
+          37,
+          9
+        ],
+        "combatOnly": [
+          22,
+          10
+        ]
+      },
+      "lostPriorWins": 1,
+      "missedMain2": 0,
+      "combatOnly": {
+        "settled": 99,
+        "wins": 14,
+        "clears": 115,
+        "damage": 128650,
+        "main2": 85
+      },
+      "genericHoldout": {
+        "cases": 58,
+        "prior": {
+          "settled": 58,
+          "wins": 1,
+          "clears": 55,
+          "damage": 36350,
+          "main2": 57
+        },
+        "trained": {
+          "settled": 58,
+          "wins": 6,
+          "clears": 65,
+          "damage": 71775,
+          "main2": 52
+        },
+        "delta": 17
+      },
+      "promoted": false
+    },
+    "warm_started": {
+      "status": "completed",
+      "method": "rule-continuation",
+      "combat": "public-plan",
+      "genericBoards": 26,
+      "heldoutGenericBoards": 12,
+      "started": "2026-11-26T19:39:15.084Z",
+      "deadline": "2026-11-26T19:45:15.084Z",
+      "cases": 1149,
+      "attempts": 24069,
+      "settled": 24001,
+      "wins": 2711,
+      "main2": 21266,
+      "interrupted": 23779,
+      "effects": 1411,
+      "verified": 1132,
+      "pairs": 9162,
+      "unsupported": {},
+      "selected": "light",
+      "baseline": {
+        "settled": 99,
+        "wins": 3,
+        "clears": 92,
+        "damage": 27825,
+        "main2": 68
+      },
+      "prior": {
+        "settled": 99,
+        "wins": 7,
+        "clears": 127,
+        "damage": 114775,
+        "main2": 92
+      },
+      "trained": {
+        "settled": 98,
+        "wins": 13,
+        "clears": 134,
+        "damage": 149625,
+        "main2": 85
+      },
+      "gain": {
+        "baseline": [
+          47,
+          11
+        ],
+        "prior": [
+          26,
+          18
+        ],
+        "combatOnly": [
+          22,
+          17
+        ],
+        "incumbent": [
+          5,
+          2
+        ]
+      },
+      "lostPriorWins": 3,
+      "missedMain2": 1,
+      "combatOnly": {
+        "settled": 99,
+        "wins": 13,
+        "clears": 127,
+        "damage": 141725,
+        "main2": 86
+      },
+      "incumbent": {
+        "settled": 98,
+        "wins": 12,
+        "clears": 132,
+        "damage": 155325,
+        "main2": 86
+      },
+      "genericHoldout": {
+        "cases": 58,
+        "prior": {
+          "settled": 58,
+          "wins": 4,
+          "clears": 84,
+          "damage": 83550,
+          "main2": 54
+        },
+        "trained": {
+          "settled": 58,
+          "wins": 7,
+          "clears": 84,
+          "damage": 83300,
+          "main2": 51
+        },
+        "delta": 0
+      },
+      "promoted": false
+    }
+  },
+  "final_reserve": {
+    "all": {
+      "cases": 200,
+      "prior": {
+        "settled": 199,
+        "wins": 17,
+        "clears": 265,
+        "damage": 195625,
+        "main2": 182
+      },
+      "trained": {
+        "settled": 199,
+        "wins": 21,
+        "clears": 268,
+        "damage": 215625,
+        "main2": 178
+      },
+      "better": 17,
+      "worse": 4,
+      "lostWins": 0,
+      "missedMain2": 0
+    },
+    "generic": {
+      "cases": 116,
+      "prior": {
+        "settled": 116,
+        "wins": 5,
+        "clears": 147,
+        "damage": 54100,
+        "main2": 111
+      },
+      "trained": {
+        "settled": 116,
+        "wins": 7,
+        "clears": 148,
+        "damage": 56400,
+        "main2": 109
+      },
+      "better": 3,
+      "worse": 0,
+      "lostWins": 0,
+      "missedMain2": 0
+    },
+    "errors": [],
+    "promoted": true
+  },
+  "historical_lethal_regression": {
+    "checked": 32,
+    "kept": 32,
+    "lost": [],
+    "errors": []
+  },
+  "isolated_srvpro2": [
+    "first-turn-hand-rip-three",
+    "second-turn-battle-and-main-two"
+  ],
+  "production": "pending-ssh"
+}

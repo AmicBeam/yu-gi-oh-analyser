@@ -1,0 +1,230 @@
+{
+  "training": {
+    "hands": 54,
+    "lethalCases": 34,
+    "lethalPairs": 177,
+    "adjustedWeights": 86
+  },
+  "tuning": [
+    {
+      "scale": 0,
+      "settled": 18,
+      "lethal": 2,
+      "nonLethalMain2": 16,
+      "noLethalNoMain2": 0,
+      "cleared": 14,
+      "damage": 11600
+    },
+    {
+      "scale": 0.45,
+      "settled": 18,
+      "lethal": 3,
+      "nonLethalMain2": 15,
+      "noLethalNoMain2": 0,
+      "cleared": 13,
+      "damage": 18100
+    },
+    {
+      "scale": 0.9,
+      "settled": 18,
+      "lethal": 8,
+      "nonLethalMain2": 10,
+      "noLethalNoMain2": 0,
+      "cleared": 22,
+      "damage": 31800
+    },
+    {
+      "scale": 1.5,
+      "settled": 17,
+      "lethal": 5,
+      "nonLethalMain2": 12,
+      "noLethalNoMain2": 0,
+      "cleared": 16,
+      "damage": 22300
+    },
+    {
+      "scale": 2.2,
+      "settled": 16,
+      "lethal": 4,
+      "nonLethalMain2": 12,
+      "noLethalNoMain2": 0,
+      "cleared": 15,
+      "damage": 18100
+    }
+  ],
+  "selectedScale": 0.9,
+  "holdout": {
+    "hands": 24,
+    "baseline": {
+      "settled": 24,
+      "lethal": 3,
+      "nonLethalMain2": 21,
+      "noLethalNoMain2": 0,
+      "cleared": 14,
+      "damage": 21900
+    },
+    "candidate": {
+      "settled": 24,
+      "lethal": 5,
+      "nonLethalMain2": 19,
+      "noLethalNoMain2": 0,
+      "cleared": 23,
+      "damage": 21400
+    },
+    "reference": {
+      "settled": 24,
+      "lethal": 15,
+      "nonLethalMain2": 9,
+      "noLethalNoMain2": 0,
+      "cleared": 39,
+      "damage": 106100
+    },
+    "replays": [
+      {
+        "id": 110,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 111,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 113,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 114,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 116,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 117,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 119,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 120,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 122,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 123,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 125,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 126,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 128,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 129,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 131,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 132,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 134,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 135,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 137,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 138,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 140,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 141,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 143,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      },
+      {
+        "id": 144,
+        "baseline": true,
+        "candidate": true,
+        "reference": true
+      }
+    ]
+  },
+  "errors": []
+}

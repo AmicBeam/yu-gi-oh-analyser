@@ -1,0 +1,42 @@
+[
+  {
+    "case": 0,
+    "model": "deployed",
+    "main2_score": 7.435,
+    "attack_ranks": 3,
+    "effect_ranks": 2
+  },
+  {
+    "case": 0,
+    "model": "candidate",
+    "main2_score": 7.435,
+    "attack_ranks": 3,
+    "effect_ranks": 2
+  },
+  {
+    "case": 1,
+    "model": "deployed",
+    "main2_score": 7.435,
+    "attack_ranks": 3,
+    "effect_ranks": 2
+  },
+  {
+    "case": 1,
+    "model": "candidate",
+    "main2_score": 7.435,
+    "attack_ranks": 3,
+    "effect_ranks": 2
+  },
+  {
+    "case": "4000-LP",
+    "model": "deployed",
+    "lethal": true,
+    "turns": 2
+  },
+  {
+    "case": "4000-LP",
+    "model": "candidate",
+    "lethal": true,
+    "turns": 2
+  }
+]
