@@ -17,7 +17,7 @@ namespace WindBot.Game.AI.Decks
 
         public Twins2Executor(GameAI ai, Duel duel) : base(ai, duel)
         {
-            WarmSecondTurnModel();
+            WarmTurnModel();
         }
 
         protected override bool UsesSecondTurnModel => true;
@@ -48,58 +48,64 @@ namespace WindBot.Game.AI.Decks
         protected virtual bool UsesSecondTurnModel => false;
         protected virtual bool SecondTurnInterrupted => false;
 
-        private static readonly Lazy<SecondTurnWeights> SecondTurnModel = new Lazy<SecondTurnWeights>(LoadSecondTurnModel);
+        private static readonly Lazy<TurnWeights> UnifiedTurnModel = new Lazy<TurnWeights>(LoadTurnModel);
 
         [DataContract]
-        private sealed class SecondTurnWeights
+        private sealed class TurnWeights
         {
             [DataMember(Name = "version")] public int Version { get; private set; }
             [DataMember(Name = "weights")] public Dictionary<string, double> Weights { get; private set; }
+            [DataMember(Name = "frontier")] public Dictionary<string, double[]> Frontier { get; private set; }
+            [DataMember(Name = "tieFrontier")] public Dictionary<string, double[]> TieFrontier { get; private set; }
         }
 
-        protected void WarmSecondTurnModel()
+        protected void WarmTurnModel()
         {
             // Evaluate the lazy loader at named-bot creation so a missing asset is visible.
-            if (SecondTurnModel.Value == null)
+            if (UnifiedTurnModel.Value == null)
                 Logger.WriteLine("Twins2 using rule fallback.");
         }
 
-        private static SecondTurnWeights LoadSecondTurnModel()
+        private static TurnWeights LoadTurnModel()
         {
             try
             {
-                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Models", "Twins2.second-turn-ranker.json");
+                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Models", "Twins2.turn-ranker.json");
+                if (!File.Exists(path))
+                    path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Models", "Twins2.second-turn-ranker.json");
                 using (var stream = File.OpenRead(path))
                 {
                     if (stream.Length > 8000000)
                         throw new FormatException("model exceeds size limit");
-                    var serializer = new DataContractJsonSerializer(typeof(SecondTurnWeights),
+                    var serializer = new DataContractJsonSerializer(typeof(TurnWeights),
                         new DataContractJsonSerializerSettings {
                             UseSimpleDictionaryFormat = true,
                             MaxItemsInObjectGraph = 200000,
                         });
-                    var model = (SecondTurnWeights)serializer.ReadObject(stream);
-                    if (model?.Version != 1 || model.Weights == null || model.Weights.Count == 0
-                        || model.Weights.Values.Any(value => double.IsInfinity(value) || double.IsNaN(value)))
+                    var model = (TurnWeights)serializer.ReadObject(stream);
+                    if (model == null || model.Version != 1 && model.Version != 2 || model.Weights == null || model.Weights.Count == 0
+                        || model.Weights.Values.Any(value => double.IsInfinity(value) || double.IsNaN(value)) ||
+                        model.Version == 2 && BranchRanker.FromWeights(model.Frontier) == null ||
+                        model.TieFrontier != null && BranchRanker.FromWeights(model.TieFrontier) == null)
                         throw new FormatException("invalid model version or weights");
-                    Logger.WriteLine("Twins2 second-turn ranker loaded (" + model.Weights.Count + " weights).");
+                    Logger.WriteLine("Twins2 turn ranker loaded (" + model.Weights.Count + " weights).");
                     return model;
                 }
             }
             catch (Exception error) when (error is IOException || error is UnauthorizedAccessException
                 || error is SerializationException || error is FormatException)
             {
-                Logger.WriteErrorLine("Twins2 second-turn ranker: " + error.Message);
+                Logger.WriteErrorLine("Twins2 turn ranker: " + error.Message);
                 return null;
             }
         }
 
         private bool SecondTurnRankingActive =>
-            UsesSecondTurnModel && Duel.Player == 0 && Duel.Turn == 2 && SecondTurnModel.Value != null;
+            UsesSecondTurnModel && Duel.Player == 0 && UnifiedTurnModel.Value != null;
 
         private double SecondTurnPreference(string prompt, string action, DuelPhase phase)
         {
-            var weights = SecondTurnModel.Value.Weights;
+            var weights = UnifiedTurnModel.Value.Weights;
             if (!weights.TryGetValue("a:" + prompt + ":" + action, out double score))
                 return 0;
             var own = Bot.GetMonsters();

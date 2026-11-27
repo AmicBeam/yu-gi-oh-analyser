@@ -64,6 +64,7 @@ namespace WindBot.Game.AI.Decks
         public TwinsExecutor(GameAI ai, Duel duel) : base(ai, duel)
         {
             AddExecutor(ExecutorType.Activate, Sweet, () => Card.Location == CardLocation.Hand && EnemyChained());
+            RegisterGryphonLethal();
             RegisterBoardPlanner();
             AddExecutor(ExecutorType.Activate, LacrimaFusion, ActivateLacrimaBurn);
             // Also applies to SELECT_CHAIN immediately after a successful Link Summon.
@@ -183,6 +184,9 @@ namespace WindBot.Game.AI.Decks
         {
             RecordPlanEnd();
             ResetBoardPlanner();
+            _gryphonLethal = false;
+            _scoutEndRemoval = false;
+            _enemySpecialSummonsThisTurn.Clear();
             _normalSummoned = false;
             _newYearSearched = false;
             _enemySummoned = 0;
@@ -256,6 +260,9 @@ namespace WindBot.Game.AI.Decks
                 if (card.IsCode(Requiem))
                     _planRequiemFromExtra = true;
             }
+            if (previousControler == 1 && previousLocation == (int)CardLocation.MonsterZone
+                && (currentControler != 1 || currentLocation != (int)CardLocation.MonsterZone))
+                _enemySpecialSummonsThisTurn.Remove(card);
             RecordRecoveryMove(previousControler, (CardLocation)previousLocation, currentControler, (CardLocation)currentLocation);
             base.OnMove(card, previousControler, previousLocation, currentControler, currentLocation);
         }
@@ -275,7 +282,10 @@ namespace WindBot.Game.AI.Decks
                 && Duel.SummoningCards.Any(card => card != null && card.IsCode(_challengeLink)))
                 ClearChallengeLink();
             if (Duel.LastSummonPlayer == 1)
+            {
                 _enemySummoned += _lastSummonMessage;
+                _enemySpecialSummonsThisTurn.UnionWith(Duel.SummoningCards.Where(card => card != null));
+            }
             else if (Duel.LastSummonPlayer == 0)
             {
                 bool requiemSummoned = Duel.SummoningCards.Any(card => card != null && card.IsCode(Requiem));
@@ -316,6 +326,11 @@ namespace WindBot.Game.AI.Decks
                 _desiraeNegateUsed |= chain.ActivateLocation == CardLocation.MonsterZone;
                 _desiraeRemovalUsed |= chain.ActivateLocation == CardLocation.Grave;
             }
+            for (int i = 0; i < Duel.CurrentChainInfo.Count; i++)
+                if (Duel.CurrentChainInfo[i].ActivatePlayer == 0 && Duel.CurrentChainInfo[i].IsActivateCode(Scout)
+                    && Duel.CurrentChainInfo[i].ActivateDescription == Util.GetStringId(Scout, 0)
+                    && !Duel.NegatedChainIndexList.Contains(i + 1))
+                    _scoutEndRemoval = true;
             RecordBattleRouteEffects();
             RecordBattleClearEffects();
             RecordBoardEffects();

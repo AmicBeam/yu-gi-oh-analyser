@@ -78,6 +78,7 @@ async function main() {
     const [fixture,deckFile,incumbentFile,incumbentInputFile,output,...data]=process.argv.slice(2);
     if (!output || !data.length) throw new Error('Supply FIXTURE DECK MODEL INCUMBENT_INPUTS OUTPUT DATA [OVERLAY]');
     const model=read(incumbentFile);
+    const incumbentWeights=model.version===2 ? model.weights : model.weights[1];
     const policySha256=hashFile(require.resolve('./duel-policy.cjs'));
     if (model.policySha256!==policySha256 || model.deckSha256!==hashFile(deckFile)) throw new Error('Incompatible base model');
     const engine=await loadEngine(path.resolve(fixture),data.map(dir=>path.resolve(dir)));
@@ -96,7 +97,7 @@ async function main() {
     if (!pairs.length) throw new Error('No replay-verified lethal comparisons');
     const delta=fit(pairs);
     const tuningRows=[0,0.45,0.9,1.5,2.2].map(scale=>{
-        const weights=adjust(model.weights[1],delta,scale);
+        const weights=adjust(incumbentWeights,delta,scale);
         return {scale,result:summary(tuning.map(input=>play(engine,input,weights))),weights};
     });
     const baselineTune=tuningRows[0].result;
@@ -104,13 +105,13 @@ async function main() {
         r.result.noLethalNoMain2<=baselineTune.noLethalNoMain2).sort((a,b)=>
         b.result.lethal-a.result.lethal || b.result.cleared-a.result.cleared ||
         b.result.damage-a.result.damage || a.scale-b.scale)[0] || tuningRows[0];
-    const candidate={...model,weights:{...model.weights,1:selected.weights},
+    const candidate={...model,weights:model.version===2 ? selected.weights : {...model.weights,1:selected.weights},
         refinement:{incumbentSha256:hashFile(incumbentFile),scale:selected.scale,lethalPairs:pairs.length,
             trainerSha256:hashFile(__filename),replayTrainerSha256:hashFile(require.resolve('./full-train.cjs'))}};
     write('candidate.json',candidate);
     const baseline=[], refined=[], reference=[], replays=[];
     for (const input of holdout) {
-        const old=play(engine,input,model.weights[1]), improved=play(engine,input,selected.weights);
+        const old=play(engine,input,incumbentWeights), improved=play(engine,input,selected.weights);
         const best=search(engine,input,{attempts:115,caseMs:1100,actionFilter:preserveLethal}).best;
         baseline.push(old);refined.push(improved);reference.push(best);
         const row={id:input.id,baseline:verified(engine,input,old,preserveLethal),

@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('node:fs');
+const { twinsTie } = require('../turn-evidence.cjs');
 const { createHash } = require('node:crypto');
 const { spawnSync } = require('node:child_process');
 const { performance } = require('node:perf_hooks');
@@ -560,9 +561,34 @@ async function main() {
     if (trainingAttempts) {
         const runs = [...finalists.values()];
         const terminalIndex = new Map(runs.map((run, index) => [run, index]));
+        const verifiedTies = new Map();
+        const byPrimary = new Map();
+        for (const run of runs.filter(run => run.points !== undefined)) {
+            const group = byPrimary.get(run.points) ?? [];
+            group.push(run);
+            byPrimary.set(run.points, group);
+        }
+        const tieDeadline = performance.now() + 1500;
+        for (const group of [...byPrimary.values()].filter(g => g.length > 1).sort((a, b) => b[0].points - a[0].points)) {
+            for (const line of group.slice(0, 4)) {
+                if (performance.now() >= tieDeadline) break;
+                const replayed = rollout(core, input, scenario, random, tieDeadline,
+                    coach ? { coach, exact: true, wirePrefix: line.wire, collect: true } :
+                        { prefix: line.responses, collect: true });
+                if (replayed && JSON.stringify(replayed.position) === JSON.stringify(line.position)
+                    && replayed.opponentDraws === line.opponentDraws)
+                    verifiedTies.set(line, twinsTie(line.position, {
+                        protectedBeforeWindow: Boolean(replayed.nibiru_window?.board.includes(79559912) &&
+                            !replayed.nibiru_window.unrevivable.includes(79559912)),
+                        hardHit: Boolean(replayed.hitResolved),
+                    }));
+            }
+        }
         const training = {
-            terminals: runs.map(({ position, nibiru_window, opponentDraws }) => ({
-                position, nibiru_window, ...(withOpponentDraws && { opponent_draws: opponentDraws }),
+            terminals: runs.map(line => ({
+                position: line.position, nibiru_window: line.nibiru_window,
+                ...(withOpponentDraws && { opponent_draws: line.opponentDraws }),
+                ...(verifiedTies.has(line) && { tiebreak: verifiedTies.get(line) }),
             })),
             runs: branchRuns.map(({ terminal, branches }) => [terminalIndex.get(terminal), branches]),
         };

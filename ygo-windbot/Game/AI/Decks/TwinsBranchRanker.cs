@@ -13,13 +13,17 @@ namespace WindBot.Game.AI.Decks
         private static readonly Lazy<BranchRanker> Twins2OpeningRanker = new Lazy<BranchRanker>(() =>
             BranchRanker.Load(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Models", "Twins2.first-turn-ranker.tsv"),
                 "Twins2 first-turn ranker", announce: true));
+        private static readonly Lazy<BranchRanker> UnifiedFrontier = new Lazy<BranchRanker>(
+            () => BranchRanker.FromWeights(UnifiedTurnModel.Value?.Frontier));
+        private static readonly Lazy<BranchRanker> TerminalTieRanker = new Lazy<BranchRanker>(
+            () => BranchRanker.FromWeights(UnifiedTurnModel.Value?.TieFrontier));
         private static readonly Lazy<BranchRanker> RecoveryBranchRanker = new Lazy<BranchRanker>(
             () => BranchRanker.Load(Environment.GetEnvironmentVariable(RecoveryModelVariable), "recovery-model"));
         private static readonly bool RecoveryModelRequested =
             !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(RecoveryModelVariable));
         private int _trainedFrontiers, _recoveryFrontiers;
         private BranchRanker OpeningBranchRanker => TrainedBranchRanker.Value
-            ?? (UsesSecondTurnModel && Duel.Turn == 1 ? Twins2OpeningRanker.Value : null);
+            ?? (UsesSecondTurnModel ? UnifiedFrontier.Value ?? Twins2OpeningRanker.Value : null);
 
         private sealed class BranchRanker
         {
@@ -30,6 +34,22 @@ namespace WindBot.Game.AI.Decks
             {
                 _weights = weights;
                 _scalars = weights[0];
+            }
+
+            public static BranchRanker FromWeights(Dictionary<string, double[]> source)
+            {
+                if (source == null || source.Count < 2 || !source.ContainsKey("0"))
+                    return null;
+                var weights = new Dictionary<int, double[]>();
+                foreach (var row in source)
+                {
+                    if (!int.TryParse(row.Key, NumberStyles.None, CultureInfo.InvariantCulture, out int code)
+                        || weights.ContainsKey(code) || row.Value == null || row.Value.Length != 4
+                        || Array.Exists(row.Value, value => double.IsNaN(value) || Math.Abs(value) > 16))
+                        return null;
+                    weights.Add(code, row.Value);
+                }
+                return new BranchRanker(weights);
             }
 
             public static BranchRanker Load(string path, string trace, bool announce = false)

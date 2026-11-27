@@ -1,0 +1,452 @@
+{
+  "version": 1,
+  "seed": [
+    1370503192,
+    2859386349,
+    2252423475,
+    1129397410,
+    549313674,
+    224311375,
+    3917590747,
+    179184971
+  ],
+  "opt": 327680,
+  "startLp": 8000,
+  "startHand": 5,
+  "drawCount": 1,
+  "decks": [
+    {
+      "main": [
+        72270339,
+        98684220,
+        66328392,
+        24203749,
+        42141493,
+        101307059,
+        44001993,
+        94145021,
+        77456448,
+        97268402,
+        101307009,
+        97268402,
+        94845588,
+        42141493,
+        24461358,
+        98684220,
+        42141493,
+        30271097,
+        24461358,
+        59438930,
+        97462632,
+        14558127,
+        73628505,
+        101307078,
+        97462632,
+        97462632,
+        23434538,
+        70405001,
+        97631303,
+        101307059,
+        14558127,
+        30271097,
+        98684220,
+        24203749,
+        33599853,
+        97268402,
+        24088928,
+        24203749,
+        80845034,
+        101307059,
+        24461358,
+        24749710
+      ],
+      "extra": [
+        94259633,
+        50277355,
+        53904087,
+        29301450,
+        58036229,
+        27519978,
+        5043010,
+        45112597,
+        7594154,
+        78397661,
+        46396218,
+        73391962,
+        87746184,
+        101307034,
+        59400890
+      ]
+    },
+    {
+      "main": [
+        42141493,
+        42141493,
+        42544773,
+        22623509,
+        73664385,
+        97268402,
+        42544773,
+        14558127,
+        27204311,
+        34041788,
+        72498838,
+        64756282,
+        100274028,
+        36099130,
+        100274004,
+        94145021,
+        73664385,
+        97631303,
+        23434538,
+        100274003,
+        73664385,
+        97268402,
+        42141493,
+        100274003,
+        42544773,
+        10045474,
+        38943357,
+        22623509,
+        97268402,
+        36099130,
+        34041788,
+        24203749,
+        27204311,
+        14558127,
+        24203749,
+        10045474,
+        10045474,
+        39123673,
+        100274003,
+        34041788
+      ],
+      "extra": [
+        34755994,
+        34755994,
+        29301450,
+        20714553,
+        45819647,
+        27519978,
+        581014,
+        83810690,
+        27548199,
+        52352005,
+        66532962,
+        66532962,
+        59400890,
+        100278018,
+        37260677
+      ]
+    }
+  ],
+  "pivot": 273,
+  "prefix": "ffffffff ffffffff 05000100 ffffffff ffffffff 01000000 0100 ffffffff ffffffff 01000000 000401 04000000 ffffffff ffffffff 01000000 00000000 010800 0100 00000000 000803 ffffffff ffffffff 0100 ffffffff ffffffff 01000100 0102 000402 01000000 ffffffff ffffffff 01000000 00000000 010800 0100 ffffffff ffffffff ffffffff ffffffff 01000400 0100 000400 04000000 ffffffff ffffffff 01000000 ffffffff ffffffff 0100 ffffffff ffffffff 05000100 0101 00000000 ffffffff ffffffff 000402 04000000 ffffffff ffffffff 05000000 000803 ffffffff ffffffff 0100 0104 ffffffff ffffffff 05000100 ffffffff ffffffff 0100 000802 ffffffff ffffffff 05000100 ffffffff ffffffff 0103 0101 01000000 0100 ffffffff ffffffff 0101 ffffffff ffffffff 01000100 0102 0101 000405 ffffffff ffffffff ffffffff ffffffff 05000100 ffffffff ffffffff 0101 ffffffff ffffffff 05000100 000803 ffffffff ffffffff 0100 0106 000402 01000000 00000000 00000000 ffffffff ffffffff 020100 0100 000401 04000000 0102 ffffffff ffffffff 01000000 0101 0102 000406 ffffffff ffffffff ffffffff ffffffff 00000000 000404 ffffffff ffffffff ffffffff ffffffff 01000000 0100 000404 ffffffff ffffffff ffffffff ffffffff 01000100 0102 0102 ffffffff 000406 ffffffff ffffffff ffffffff ffffffff 01000200 0102 0100 000405 ffffffff ffffffff ffffffff ffffffff 05000100 0101 0100 ffffffff ffffffff 000401 ffffffff ffffffff 05000100 0104 ffffffff ffffffff ffffffff ffffffff 01000200 0102 ffffffff 000405 ffffffff ffffffff ffffffff ffffffff 05000000 010c 0108 0101 ffffffff ffffffff 020100 000400 04000000 ffffffff ffffffff 01000100 0101 0100 ffffffff 000401 ffffffff ffffffff ffffffff ffffffff 05000100 0100 0100 ffffffff ffffffff 000400 04000000 000403 04000000 ffffffff ffffffff 05000100 0100 ffffffff ffffffff ffffffff ffffffff 05000000 ffffffff ffffffff 000400 01000000 000404 04000000 000402 04000000 000401 000403 ffffffff ffffffff 01000100 0105 0104 ffffffff 000406 ffffffff ffffffff 01000000 ffffffff ffffffff 0107 ffffffff ffffffff 01000000 0102 0102 000405 ffffffff ffffffff 00000000 ffffffff ffffffff 07000000 ffffffff 01000000 ffffffff ffffffff 0100 000803 ffffffff ffffffff 00000000 010800 01000000 ffffffff ffffffff 0105 0102 0100 ffffffff ffffffff ffffffff ffffffff",
+  "continuation": [
+    {
+      "name": "SelectIdleCmd",
+      "player": 1,
+      "response": "00000000"
+    },
+    {
+      "name": "SelectTribute",
+      "player": 1,
+      "response": "020102"
+    },
+    {
+      "name": "SelectPlace",
+      "player": 1,
+      "response": "010402"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectIdleCmd",
+      "player": 1,
+      "response": "05000100"
+    },
+    {
+      "name": "SelectPlace",
+      "player": 1,
+      "response": "010800"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectIdleCmd",
+      "player": 1,
+      "response": "05000200"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectCard",
+      "player": 1,
+      "response": "0104"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectIdleCmd",
+      "player": 1,
+      "response": "05000000"
+    },
+    {
+      "name": "SelectPlace",
+      "player": 1,
+      "response": "010802"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectCard",
+      "player": 1,
+      "response": "0100"
+    },
+    {
+      "name": "SelectYesNo",
+      "player": 1,
+      "response": "01000000"
+    },
+    {
+      "name": "SelectCard",
+      "player": 1,
+      "response": "0100"
+    },
+    {
+      "name": "SelectPlace",
+      "player": 1,
+      "response": "010401"
+    },
+    {
+      "name": "SelectPosition",
+      "player": 1,
+      "response": "01000000"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectIdleCmd",
+      "player": 1,
+      "response": "05000200"
+    },
+    {
+      "name": "SelectCard",
+      "player": 1,
+      "response": "0100"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectCard",
+      "player": 1,
+      "response": "0106"
+    },
+    {
+      "name": "SelectPlace",
+      "player": 1,
+      "response": "010801"
+    },
+    {
+      "name": "SelectEffectYn",
+      "player": 1,
+      "response": "01000000"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectCard",
+      "player": 1,
+      "response": "0100"
+    },
+    {
+      "name": "SelectPlace",
+      "player": 1,
+      "response": "010400"
+    },
+    {
+      "name": "SelectEffectYn",
+      "player": 1,
+      "response": "00000000"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectIdleCmd",
+      "player": 1,
+      "response": "01000500"
+    },
+    {
+      "name": "SelectCard",
+      "player": 1,
+      "response": "0100"
+    },
+    {
+      "name": "SelectSum",
+      "player": 1,
+      "response": "020000"
+    },
+    {
+      "name": "SelectPlace",
+      "player": 1,
+      "response": "010401"
+    },
+    {
+      "name": "SelectPosition",
+      "player": 1,
+      "response": "01000000"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectEffectYn",
+      "player": 1,
+      "response": "01000000"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectCard",
+      "player": 1,
+      "response": "0100"
+    },
+    {
+      "name": "SelectPlace",
+      "player": 1,
+      "response": "010801"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectIdleCmd",
+      "player": 1,
+      "response": "07000000"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    }
+  ]
+}

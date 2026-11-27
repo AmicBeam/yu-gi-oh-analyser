@@ -56,7 +56,7 @@ function joinSeat({password, name, version, hand}, gamePort, runtime) {
                 if (prompt==='Retry') throw new Error('Engine rejected Amazoness response');
                 if (prompt==='Start') {
                     if (game.observerFlag || ![0,1].includes(game.playerNumber)) throw new Error('Two-player seat required');
-                    policy=new AmazonessPolicy(game.playerNumber,runtime.cardReader,runtime.model,log);
+                    policy=new AmazonessPolicy(game.playerNumber,runtime.cardReader,runtime.model,log,runtime.deck.extra);
                 }
                 if (!policy) break;
                 policy.observe(game);
@@ -96,10 +96,12 @@ async function main() {
     const deckPath=values.deck||path.join(__dirname,'../Decks/AI_Amazoness.ydk');
     const deck=deckFrom(deckPath);
     const model=values.model&&JSON.parse(fs.readFileSync(values.model,'utf8'));
-    if (model && (model.objective!=='amazoness-complete-duel-v1'||model.version!==1||
+    const validWeights = weights => weights && !Array.isArray(weights) && Object.values(weights).every(Number.isFinite);
+    if (model && (!((model.version===1 && model.objective==='amazoness-complete-duel-v1' &&
+            [0,1].every(seat=>validWeights(model.weights?.[seat]))) ||
+        (model.version===2 && model.objective==='amazoness-complete-duel-v2' && validWeights(model.weights)))||
         model.deckSha256!==createHash('sha256').update(fs.readFileSync(deckPath)).digest('hex')||
-        model.policySha256!==createHash('sha256').update(fs.readFileSync(require.resolve('./duel-policy.cjs'))).digest('hex')||
-        [0,1].some(seat=>!model.weights?.[seat]||Object.values(model.weights[seat]).some(n=>!Number.isFinite(n)))))
+        model.policySha256!==createHash('sha256').update(fs.readFileSync(require.resolve('./duel-policy.cjs'))).digest('hex')))
         throw new Error('Incompatible Amazoness model');
     const {cardReader}=await loadEngine(path.resolve(values.fixture),values.data.map(p=>path.resolve(p)));
     if ([...deck.main,...deck.extra].some(code=>!cardReader(code))) throw new Error('Missing deck card data');

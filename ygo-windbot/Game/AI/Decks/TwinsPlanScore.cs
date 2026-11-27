@@ -476,13 +476,13 @@ namespace WindBot.Game.AI.Decks
             int hand = p.Hand.Count(id => IsTwin(id) || id == Trouble || id == Password);
             int pending = p.Pending == 0 ? 0 : 2;
             int engine = p.Grave.Count(id => id == Engraver || id == Yama || id == LilLa || id == KiSikil);
-            int reuse = p.Grave.Count(id => id == Requiem || id == Deal || id == Sunny);
+            int reuse = p.Grave.Count(id => id == Requiem || id == Deal);
             return score * 3 / ScoreUnitsPerTenth + resources * 4 + hand * 3 + pending + engine * 4 + reuse * 3 - p.PasswordBanishes * 4
                 + (p.Trouble ? 4 : 0) + (p.Normal ? 0 : 2) + p.Hand.Count
                 - TwinSearchesUsed(p) * 3 - p.LinkTwoForLinkOne * 4;
         }
 
-        private static int ContinuationRank(PlanPosition p)
+        private int ContinuationRank(PlanPosition p)
         {
             int cards = p.Field.Where(id => id != 0).Sum(id => 8 + Math.Min(2, LinkRating(id)) * 3);
             int twinHand = p.Hand.Count(id => IsTwin(id));
@@ -522,8 +522,7 @@ namespace WindBot.Game.AI.Decks
                     combo += 27;
             }
             if (p.Has(Sequence) && p.Fresh(PlanEffect.Fusion)) combo += 15;
-            if (p.Has(Sunny) && p.Fresh(PlanEffect.Sunny)) combo += 17;
-            if (p.Grave.Contains(Sunny) && p.Fresh(PlanEffect.Fusion)) combo += 16;
+            combo += SunnyFollowup(p) * 5;
             if (p.Twins && p.Fresh(PlanEffect.Fusion)) combo -= 14;
             if (p.Has(Nightfall) && p.Field.Count(id => id != 0) == 1) combo -= 7;
             return cards + twinHand * 10 + combo + p.Score / ScoreUnitsPerTenth + (p.Pending != 0 ? 3 : 0) - p.PasswordBanishes * 4
@@ -642,7 +641,10 @@ namespace WindBot.Game.AI.Decks
                 return states;
 
             // Keep placements that change effects, then reserve room for different engines.
+            var ranker = timed ? OpeningBranchRanker : null;
             var diverse = states.OrderByDescending(p => Math.Max(p.Rank, p.Potential))
+                .ThenByDescending(p => UsesSecondTurnModel ? ranker?.Score(p) ?? 0 : 0)
+                .ThenByDescending(p => UsesSecondTurnModel ? TwinTieScore(p) : 0)
                 .ThenBy(p => p.LinkTwoForLinkOne).ThenByDescending(p => p.FirstTwinSearchMove)
                 .ThenBy(p => p.FirstYamaGraveMove).ThenBy(p => p.FirstSweetSendMove)
                 .ThenBy(p => p.FirstNewYearSendWithoutSearch)
@@ -650,7 +652,6 @@ namespace WindBot.Game.AI.Decks
                 .SelectMany(group => group.Take(group.First().Has(Gryphon) ? 5 : 2))
                 .ToList();
             var scoring = diverse.OrderByDescending(p => p.Rank).Take(width / 5);
-            var ranker = timed ? OpeningBranchRanker : null;
             if (ranker != null)
                 _trainedFrontiers++;
             var promising = ranker == null ? diverse.OrderByDescending(p => p.Potential).ToArray()
@@ -881,7 +882,7 @@ namespace WindBot.Game.AI.Decks
                             exactCache.Add(state.EvaluationKey, (score - NetDrawPoints(state), state.AbaoZone));
                     }
                     state.Score = score;
-                    if (score > best.Score || score == best.Score && PreferEnd(state, best))
+                    if (score > best.Score || score == best.Score && PreferScoredEnd(state, best))
                         best = state;
                 }
             }
@@ -893,6 +894,60 @@ namespace WindBot.Game.AI.Decks
             moves.Reverse();
             return new PlanResult { Moves = moves, Terminal = best, Score = best.Score, States = count,
                 Cutoffs = cutoffs, ReturnZone = best.AbaoZone, ScoreEvaluations = scoreEvaluations };
+        }
+
+        private bool PreferScoredEnd(PlanPosition candidate, PlanPosition best)
+        {
+            if (!UsesSecondTurnModel) return PreferEnd(candidate, best);
+            int tie = TwinTieScore(candidate).CompareTo(TwinTieScore(best));
+            if (tie != 0) return tie > 0;
+            // Only a completed end-board tie can see these calibrated weights.
+            // The frontier and tactical ranking still use the incumbent.
+            var model = TerminalTieRanker.Value ?? OpeningBranchRanker;
+            if (model != null)
+            {
+                int comparison = model.Score(candidate).CompareTo(model.Score(best));
+                if (comparison != 0) return comparison > 0;
+            }
+            return candidate.Depth < best.Depth;
+        }
+
+        private int SunnyFollowup(PlanPosition p)
+        {
+            bool hasPair = p.Grave.Any(id => IsRedTwin(id) && p.CanRevive(id))
+                && p.Grave.Any(id => IsBlueTwin(id) && p.CanRevive(id));
+            bool room = p.Field.Take(5).Any(id => id == 0);
+            int sunny = Array.IndexOf(p.Field, Sunny), nightfall = Array.IndexOf(p.Field, Nightfall);
+            if (sunny >= 0 && p.Fresh(PlanEffect.Sunny) && hasPair && room
+                && CanActivateOnField(p.Field, sunny, p.NormalZones))
+                return 3;
+            if (nightfall >= 0 && p.Extra.Contains(Sunny) && p.Fresh(PlanEffect.NightfallRotate)
+                && CanActivateOnField(p.Field, nightfall, p.NormalZones)
+                && p.Grave.Any(id => Evil(id) && id != EvilKiSikil && id != EvilLilLa))
+                return hasPair && room ? 3 : 1;
+            if (!p.Grave.Contains(Sunny)) return 0;
+            var otherLight = p.Grave.Where(id => id != Sunny && id != Engraver && LightFiend(id)).Distinct().ToList();
+            bool enablesEngraver = room && p.Fresh(PlanEffect.Engraver) &&
+                p.Grave.Contains(Engraver) && otherLight.Count == 0;
+            bool enablesFusion = room && !p.Twins && p.Fresh(PlanEffect.Fusion)
+                && CanActivateOnField(p.Field, Array.IndexOf(p.Field, Sequence), p.NormalZones)
+                && (p.Extra.Contains(LacrimaFusion) &&
+                    otherLight.Count + (p.Grave.Contains(Engraver) ? 1 : 0) == 1
+                    || p.Extra.Contains(Desirae) && p.Grave.Contains(Engraver) && otherLight.Count == 1);
+            return enablesEngraver || enablesFusion ? 3 : 0;
+        }
+
+        private int TwinTieScore(PlanPosition p)
+        {
+            bool independentStarter = p.Hand.Any(id => id == KiSikil || id == LilLa || id == Sweet || id == NewYear);
+            int resources = p.Hand.Where(id => IsHandTrap(id) && id != _CardId.InfiniteImpermanence)
+                .Distinct().Count() + (independentStarter ? 1 : 0);
+            if (p.Hand.Contains(NightPhoto) && CanAccessPhoto(p)) resources++;
+            int conversion = (p.Set & SetChallenge) != 0 && p.Grave.Contains(EvilLilLa) && p.CanRevive(EvilLilLa) ? 1 : 0;
+            if (SunnyFollowup(p) != 0) conversion++;
+            int timing = p.EarlyRequiem && !p.Fresh(PlanEffect.Requiem) ? 1 : 0;
+            int resilience = (HasNibiruDefense(p) ? 1 : 0) + (p.SearchLocked && independentStarter ? 1 : 0);
+            return 5 * Math.Min(resources, 4) + 2 * conversion + 2 * timing + 3 * resilience;
         }
 
         private static bool PreferEnd(PlanPosition candidate, PlanPosition best)

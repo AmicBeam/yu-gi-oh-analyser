@@ -266,7 +266,7 @@ namespace WindBot.Game.AI.Decks
                         next.Potential = ContinuationRank(next)
                             + (prioritizeExchanges ? ResourceExchangeRank(next) : next.Score / ScoreUnitsPerTenth);
                         successors.Add(next);
-                        if (next.Score > best.Score || next.Score == best.Score && PreferEnd(next, best))
+                        if (next.Score > best.Score || next.Score == best.Score && PreferScoredEnd(next, best))
                             best = next;
                     }
                 }
@@ -839,7 +839,7 @@ namespace WindBot.Game.AI.Decks
                         evaluations++;
                         nextFrontier.Add(next);
                         if (next.Score > best.Score || next.Score == best.Score
-                            && (PreferEnd(next, best) || !PreferEnd(best, next)
+                            && (PreferScoredEnd(next, best) || !PreferScoredEnd(best, next)
                                 && HasCenteredDesiraeForGryphon(next) && !HasCenteredDesiraeForGryphon(best)))
                             best = next;
                     }

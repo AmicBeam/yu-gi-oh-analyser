@@ -8,6 +8,8 @@ const { nameOf } = require('../tests/engine-search-protocol.cjs');
 const { context, value } = require('./offline.cjs');
 const { chainRules, finishSet, isEndSet, selectionRules } = require('./live-rules.cjs');
 const { actionable, features: secondFeatures, battleOptions, actionPrior, learned: secondValue } = require('./second-turn.cjs');
+const { mergeMagistus } = require('../Models/pack-turn-models.cjs');
+const { OutlawPlan } = require('./main-phase-plan.cjs');
 const { planCombat } = require('./public-combat.cjs');
 
 const MZONE = 4, SZONE = 8, HAND = 2, GRAVE = 16, EXTRA = 64;
@@ -24,8 +26,9 @@ class MagistusPolicy {
     constructor(seat, cardReader, guides, model, log, extra = [], secondModel) {
         this.seat = seat;
         this.guides = guides;
-        this.model = model;
-        this.secondModel = secondModel;
+        this.model = secondModel && !model ? mergeMagistus({ weights: {} }, secondModel) :
+            model && mergeMagistus(model, secondModel);
+        this.tactics = this.model?.tactics;
         this.log = log;
         this.turnActor = -1;
         this.initialized = false;
@@ -47,6 +50,8 @@ class MagistusPolicy {
         this.initialOwnTurn = 0;
         this.repeat = new Map();
         this.secondOverrides = 0;
+        this.outlawPlan = new OutlawPlan();
+        this.outlawPlan.reset();
         this.state = { cardReader, searchPolicy: ownPolicy(0, true), trace: [], events: [],
             turn: 0, phase: 0, summons: 0, pending: 0, board: [], hand: [], grave: [],
             chains: new Map(), draws: 0, lost: 0, spellCount: 0, trapActions: [], declarations: [] };
@@ -55,7 +60,7 @@ class MagistusPolicy {
     own(player) { return player === this.seat; }
 
     goingSecond() {
-        return (this.secondModel || this.exploreSecond) && this.initialOwnTurn === 2 && this.state.turn === 2;
+        return this.own(this.turnActor) && Boolean(this.tactics || this.exploreSecond);
     }
 
     refresh() {
@@ -141,6 +146,7 @@ class MagistusPolicy {
             this.lp[msg.player] += msg.value;
             break;
         case 'NewTurn':
+            this.outlawPlan.reset();
             if (s.turn > 0) this.log({ event: 'turn-ended', turn: s.turn, board: s.board, draws: s.draws, lost: s.lost,
                 set: cardsIn(this.spells.filter(c => c && (c.position & 10))) });
             s.turn++;
@@ -254,11 +260,19 @@ class MagistusPolicy {
             if (s.solving?.player === 0) s.chainSource = s.solving.code;
             break;
         case 'ChainNegated':
-        case 'ChainDisabled':
+        case 'ChainDisabled': {
+            const stopped = s.chains.get(msg.chainCount);
+            const response = [...s.chains.entries()].reverse().find(([i, link]) =>
+                i > msg.chainCount && link.player === 0 && [card.savage, card.dragon, card.outlaw].includes(link.code));
+            if (stopped?.player === 1 && response)
+                s.events.push(['coverage', s.turn, 0, stopped.code, response[1].code]);
             s.chains.delete(msg.chainCount);
             break;
+        }
         case 'ChainSolved': {
             const chain = s.chains.get(msg.chainCount);
+            if (chain?.player === 0 && [card.moon, card.nation, card.tears].includes(chain.code))
+                s.events.push(['resource', s.turn, 0, chain.code]);
             if (chain && drawTraps.has(chain.code)) {
                 const pressure = chain.player === 1 ? this.drawPressure : this.ownDrawPressure;
                 pressure.add(chain.code);
@@ -331,6 +345,18 @@ class MagistusPolicy {
     }
 
     battle(msg) {
+        const plannedAttack = msg.attackableCards.some(attacker => {
+            if (attacker.directAttack) return true;
+            const attack = this.field[attacker.sequence]?.attack ?? this.state.cardReader(attacker.code)?.attack ?? 0;
+            return this.enemyField.some(defender => defender && attack > (defender.position & 4
+                ? defender.defense ?? this.state.cardReader(defender.code)?.defense ?? Infinity
+                : defender.attack ?? this.state.cardReader(defender.code)?.attack ?? Infinity));
+        });
+        if (!plannedAttack && this.enemyField.filter(Boolean).length === this.enemyMonsters.filter(Boolean).length
+            && !msg.activatableCards.length) {
+            if (msg.canM2) return msg.prepareResponse(P.BattleCmdType.TO_M2);
+            if (msg.canEp) return msg.prepareResponse(P.BattleCmdType.TO_EP);
+        }
         if (this.goingSecond()) {
             const options = battleOptions(msg, this);
             if (options.length) {
@@ -339,8 +365,8 @@ class MagistusPolicy {
                     this.state.cardReader(msg.attackableCards.find(c => c.sequence === o.attackSequence)?.code ?? 0)?.attack ?? 0;
                 const plan = !lethal.length && this.publicCombat(options.filter(o => o.attackSequence !== undefined)
                     .map(o => ({ sequence: o.attackSequence, attack: attack(o), direct: o.key.endsWith(':1') })));
-                const guards = this.secondModel?.combatGuards;
-                const safeOnly = this.secondModel?.combat === 'battle-safe';
+                const guards = this.tactics?.combatGuards;
+                const safeOnly = this.tactics?.combat === 'battle-safe';
                 const usePlan = plan?.attacker !== undefined &&
                     (!safeOnly || (plan.win && !this.enemyBackrow.some(Boolean))) &&
                     (!guards?.onlyLethal || plan.win) && (!guards?.noBackrow || !this.enemyBackrow.some(Boolean)) &&
@@ -367,7 +393,7 @@ class MagistusPolicy {
     }
 
     publicCombat(attackers) {
-        if (!['public-plan', 'battle-safe'].includes(this.secondModel?.combat) || !attackers.length) return undefined;
+        if (!['public-plan', 'battle-safe'].includes(this.tactics?.combat) || !attackers.length) return undefined;
         const defenders = this.enemyField.flatMap((c, sequence) => {
             if (!c) return [];
             const defending = c.position === 4;
@@ -382,17 +408,17 @@ class MagistusPolicy {
 
     rank(name, choices, weight) {
         const second = this.goingSecond() && actionable.has(name);
-        const continuation = this.secondModel?.training === 'rule-continuation';
-        const gate = this.secondModel?.overrideGate;
+        const continuation = this.tactics?.training === 'rule-continuation';
+        const gate = this.tactics?.overrideGate;
         const safeContext = gate === 'open-board' ? !this.enemyMonsters.some(Boolean) && !this.enemyBackrow.some(Boolean)
             : gate === 'no-backrow' ? !this.enemyBackrow.some(Boolean)
             : gate === 'after-summon' ? this.state.summons > 0 : true;
         const rankable = second && safeContext && (!continuation || (name === 'SelectIdleCmd' && this.state.phase === MAIN_ONE));
-        const limit = this.secondModel?.overrideLimit;
+        const limit = this.tactics?.overrideLimit;
         const rated = choices.map(option => {
             const keys = rankable ? secondFeatures(this, name, option, continuation) : [];
             const prior = weight(option);
-            return { ...option, keys, prior, score: prior + (rankable ? secondValue(this.secondModel, keys) : 0) };
+            return { ...option, keys, prior, score: prior + (rankable ? secondValue(this.model, keys.map(key => 'tactics/' + key)) : 0) };
         });
         if (rankable && this.exploreSecond && rated.length > 1) return this.exploreSecond(name, rated);
         const choice = rated.reduce((best, option) => option.score > best.score ? option : best);
@@ -420,7 +446,19 @@ class MagistusPolicy {
 
     choose(msg) {
         const name = nameOf(msg), s = this.state;
+        const tactical = this.outlawPlan.choose(msg, name, this);
+        if (tactical) {
+            this.log({ event: 'magistus-outlaw-plan', prompt: name });
+            return tactical;
+        }
         if (name === 'SelectBattleCmd') return this.battle(msg);
+        if (name === 'SelectIdleCmd' && this.own(this.turnActor) && s.phase === MAIN_ONE) {
+            const monsters = this.field.filter(c => c?.code);
+            const glass = this.field.findIndex(c => c?.code === card.verre);
+            const king = msg.spSummonableCards.find(c => c.code === card.king && c.location === EXTRA);
+            if (king && glass >= 0 && monsters.length === 1 && this.glassIsDisabled(this.seat, MZONE, glass))
+                return msg.prepareResponse(P.IdleCmdType.SPSUMMON, king);
+        }
         if (name === 'SelectEffectYn' && msg.code === card.verre &&
             this.glassIsDisabled(msg.controller, msg.location, msg.sequence)) {
             this.log({ event: 'skip-disabled-glass', turn: s.turn, sequence: msg.sequence });
@@ -430,10 +468,10 @@ class MagistusPolicy {
         let options = optionsFor(msg, s).map(o => ({ ...o, key: this.key(name, o.key) }));
         if (!options.length) throw new Error('No legal choices for ' + name);
         const second = this.goingSecond();
-        if (second && ['public-plan', 'battle-safe'].includes(this.secondModel?.combat)) {
-            const early = this.secondModel.combatGuards?.early;
+        if (second && ['public-plan', 'battle-safe'].includes(this.tactics?.combat)) {
+            const early = this.tactics.combatGuards?.early;
             const openBoard = !this.enemyMonsters.some(Boolean) && !this.enemyBackrow.some(Boolean);
-            const enterEarly = this.secondModel.combat === 'public-plan' && early !== false &&
+            const enterEarly = this.tactics.combat === 'public-plan' && early !== false &&
                 (early === 'open-board' ? openBoard : early !== 'no-backrow' || !this.enemyBackrow.some(Boolean));
             if (enterEarly && name === 'SelectIdleCmd' && s.phase === MAIN_ONE) {
                 const battle = options.find(o => o.key === 'battle');
@@ -451,7 +489,7 @@ class MagistusPolicy {
                 if (target) return target.response;
             }
         }
-        let choice = second ? undefined : this.guide(name, options);
+        let choice = this.initialOwnTurn === 2 && this.firstOwnTurn ? undefined : this.guide(name, options);
         if (name === 'SelectPosition') {
             // Advance the guide past this prompt, but let live position policy choose the response.
             choice = this.selectPosition(msg, options);
@@ -485,7 +523,7 @@ class MagistusPolicy {
             const weight = option => {
                 let prior = option.weight;
                 const id = Number(option.key.split(':')[0]);
-                if (second && name === 'SelectIdleCmd' && option.key === 'battle') {
+                if (second && msg.canBp && name === 'SelectIdleCmd' && option.key === 'battle') {
                     const attacking = this.field.some(c => c?.position === 1 && (c.attack ?? s.cardReader(c.code)?.attack ?? 0) > 0);
                     prior = attacking ? 23 : 4;
                 }
@@ -504,8 +542,7 @@ class MagistusPolicy {
                 return Math.log(Math.max(0.0001, prior)) + Math.max(-4, Math.min(4, learned)) - 1.4 * repeats;
             };
             const ranked = name === 'SelectIdleCmd' && options.some(option => option.key === 'end')
-                ? options.filter(option => !isEndSet(option) &&
-                    !(second && msg.canBp && s.phase === MAIN_ONE && option.key === 'end')) : options;
+                ? options.filter(option => !isEndSet(option)) : options;
             choice = this.rank(name, ranked, weight);
             if (name === 'SelectIdleCmd') this.log({ event: 'ranked', model: Boolean(this.model), action: choice.key });
         }

@@ -145,6 +145,7 @@ test('an immediately lethal direct attack stays ahead of a learned Main 2 prefer
     const model = { weights: { 'action:SelectBattleCmd:main2': 100 } };
     const policy = new MagistusPolicy(1, () => ({ attack: 2500 }), [], null, () => {}, [], model);
     policy.lp[0] = 2400;
+    policy.turnActor = 1;
     policy.initialOwnTurn = policy.state.turn = 2;
     const battle = new P.YGOProMsgSelectBattleCmd().fromPartial({
         player: 1, canM2: 1, attackableCount: 1, activatableCount: 0, activatableCards: [],
@@ -167,6 +168,7 @@ test('second-turn target features match across opposing monsters with the same p
 test('continuation weights affect Main 1 and leave battle and Main 2 on rule ranking', () => {
     const model = { training: 'rule-continuation', weights: { 'action:SelectIdleCmd:learned': 3 } };
     const policy = new MagistusPolicy(1, () => null, [], null, () => {}, [], model);
+    policy.turnActor = 1;
     policy.initialOwnTurn = policy.state.turn = 2;
     const choices = [{ key: 'rule', weight: 2 }, { key: 'learned', weight: 1 }];
     policy.state.phase = 4;
@@ -174,6 +176,9 @@ test('continuation weights affect Main 1 and leave battle and Main 2 on rule ran
     assert.equal(policy.rank('SelectBattleCmd', choices, o => o.weight).key, 'rule');
     policy.state.phase = 256;
     assert.equal(policy.rank('SelectIdleCmd', choices, o => o.weight).key, 'rule');
+    policy.state.turn = 4;
+    policy.state.phase = 4;
+    assert.equal(policy.rank('SelectIdleCmd', choices, o => o.weight).key, 'learned');
 });
 
 test('combat clears with the smaller attacker when the stronger attacker can then win', () => {
@@ -187,6 +192,7 @@ test('combat clears with the smaller attacker when the stronger attacker can the
 test('a one-change continuation model falls back to rule ranking after its first override', () => {
     const model = { training: 'rule-continuation', overrideLimit: 1, weights: { 'action:SelectIdleCmd:change': 3 } };
     const policy = new MagistusPolicy(1, () => null, [], null, () => {}, [], model);
+    policy.turnActor = 1;
     policy.initialOwnTurn = policy.state.turn = 2;
     policy.state.phase = 4;
     const choices = [{ key: 'rule', weight: 2 }, { key: 'change', weight: 1 }];

@@ -1,0 +1,917 @@
+{
+  "version": 1,
+  "seed": [
+    2653563515,
+    994155603,
+    2869017505,
+    2838434934,
+    243110264,
+    1284789379,
+    273880036,
+    2515643388
+  ],
+  "opt": 327680,
+  "startLp": 8000,
+  "startHand": 5,
+  "drawCount": 1,
+  "decks": [
+    {
+      "main": [
+        73810864,
+        10045474,
+        61976639,
+        65681983,
+        36326160,
+        27204311,
+        42141493,
+        73810864,
+        10045474,
+        98360333,
+        73810864,
+        25150,
+        27204311,
+        81078880,
+        59438930,
+        54257392,
+        97268402,
+        60764609,
+        97268402,
+        97268402,
+        42141493,
+        14558128,
+        37582948,
+        25150,
+        25156,
+        94145022,
+        54257392,
+        14558128,
+        10045474,
+        54257392,
+        27204311,
+        36326160,
+        25151,
+        37582948,
+        36326160,
+        82699999,
+        25150,
+        42141493,
+        23434538,
+        59438930
+      ],
+      "extra": [
+        25152,
+        6636319,
+        2463794,
+        36609519,
+        9205574,
+        25153,
+        49867899,
+        24269961,
+        65330383,
+        4731783,
+        25154,
+        93672138,
+        79559912,
+        46640168,
+        82135803
+      ]
+    },
+    {
+      "main": [
+        66328392,
+        94145021,
+        97631303,
+        24461358,
+        33599853,
+        97268402,
+        24461358,
+        42141493,
+        24203749,
+        70405001,
+        97268402,
+        94845588,
+        98684220,
+        98684220,
+        101307059,
+        98684220,
+        80845034,
+        73628505,
+        97462632,
+        97268402,
+        77456448,
+        30271097,
+        24203749,
+        24461358,
+        101307059,
+        97462632,
+        14558127,
+        97462632,
+        24203749,
+        72270339,
+        24088928,
+        23434538,
+        101307059,
+        14558127,
+        101307078,
+        42141493,
+        101307009,
+        42141493,
+        44001993,
+        24749710,
+        59438930,
+        30271097
+      ],
+      "extra": [
+        94259633,
+        50277355,
+        53904087,
+        29301450,
+        58036229,
+        27519978,
+        5043010,
+        45112597,
+        7594154,
+        78397661,
+        46396218,
+        73391962,
+        87746184,
+        101307034,
+        59400890
+      ]
+    }
+  ],
+  "pivot": 247,
+  "prefix": "ffffffff ffffffff ffffffff ffffffff 00000300 000402 ffffffff ffffffff 01000000 ffffffff ffffffff 0100 ffffffff 00000000 ffffffff ffffffff ffffffff ffffffff 05000100 000802 ffffffff ffffffff 0102 ffffffff ffffffff 05000100 000802 ffffffff ffffffff 01000000 0100 ffffffff ffffffff 01000100 000400 04000000 ffffffff ffffffff ffffffff ffffffff 01000300 0100 0100 000405 ffffffff ffffffff 01000000 00000000 ffffffff ffffffff 0100 000402 04000000 ffffffff ffffffff 07000000 ffffffff ffffffff ffffffff 00000000 ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff 00000000 010401 ffffffff ffffffff 01000000 00000000 ffffffff ffffffff 0105 ffffffff ffffffff 05000200 010802 ffffffff ffffffff ffffffff ffffffff 05000100 0100 ffffffff ffffffff 0100 ffffffff ffffffff 05000100 010801 ffffffff ffffffff 0100 0100 010400 01000000 01000000 ffffffff ffffffff 0100 ffffffff ffffffff 05000100 0100 ffffffff ffffffff ffffffff ffffffff 05000200 010802 ffffffff 01000000 010803 ffffffff ffffffff 0100 0101 0100 010400 01000000 ffffffff ffffffff 01000000 0102 010401 01000000 ffffffff ffffffff ffffffff ffffffff 05000100 0100 01000000 ffffffff ffffffff ffffffff ffffffff 04000000 010802 ffffffff ffffffff 06000000 ffffffff 01000100 0100 ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff 01000000 ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff 03000000 ffffffff ffffffff 01000000 ffffffff ffffffff 010803 ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff 00000200 000402 ffffffff ffffffff 01000000 ffffffff ffffffff 0103 000401 01000000 ffffffff ffffffff 05000000 000801 ffffffff ffffffff 01000000 0102 ffffffff ffffffff 01000100 0100 000406 ffffffff ffffffff ffffffff 00000000 00000000 0100 0101 00000000 00000000 00000000 ffffffff ffffffff 0101 000401 01000000 01000000 ffffffff ffffffff 0100 ffffffff ffffffff 05000100 000803 ffffffff ffffffff 0101 ffffffff ffffffff 05000000 ffffffff ffffffff 000403 01000000 ffffffff ffffffff",
+  "continuation": [
+    {
+      "name": "SelectIdleCmd",
+      "player": 0,
+      "response": "01000100"
+    },
+    {
+      "name": "SelectUnselectCard",
+      "player": 0,
+      "response": "0100"
+    },
+    {
+      "name": "SelectUnselectCard",
+      "player": 0,
+      "response": "0101"
+    },
+    {
+      "name": "SelectPlace",
+      "player": 0,
+      "response": "000406"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "00000000"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectCard",
+      "player": 0,
+      "response": "0102"
+    },
+    {
+      "name": "SelectPlace",
+      "player": 0,
+      "response": "000403"
+    },
+    {
+      "name": "SelectEffectYn",
+      "player": 0,
+      "response": "01000000"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectIdleCmd",
+      "player": 0,
+      "response": "01000900"
+    },
+    {
+      "name": "SelectPlace",
+      "player": 0,
+      "response": "000400"
+    },
+    {
+      "name": "SelectPosition",
+      "player": 0,
+      "response": "01000000"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectIdleCmd",
+      "player": 0,
+      "response": "01000500"
+    },
+    {
+      "name": "SelectUnselectCard",
+      "player": 0,
+      "response": "0100"
+    },
+    {
+      "name": "SelectUnselectCard",
+      "player": 0,
+      "response": "0100"
+    },
+    {
+      "name": "SelectUnselectCard",
+      "player": 0,
+      "response": "0101"
+    },
+    {
+      "name": "SelectUnselectCard",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectPlace",
+      "player": 0,
+      "response": "000406"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectEffectYn",
+      "player": 0,
+      "response": "01000000"
+    },
+    {
+      "name": "SelectCard",
+      "player": 0,
+      "response": "0100"
+    },
+    {
+      "name": "SelectCard",
+      "player": 0,
+      "response": "0101"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "00000000"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectCard",
+      "player": 0,
+      "response": "0100"
+    },
+    {
+      "name": "SelectPlace",
+      "player": 0,
+      "response": "000404"
+    },
+    {
+      "name": "SelectPlace",
+      "player": 0,
+      "response": "000803"
+    },
+    {
+      "name": "SelectEffectYn",
+      "player": 0,
+      "response": "01000000"
+    },
+    {
+      "name": "SelectCard",
+      "player": 0,
+      "response": "0106"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectEffectYn",
+      "player": 1,
+      "response": "01000000"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectCard",
+      "player": 1,
+      "response": "0101"
+    },
+    {
+      "name": "SelectPlace",
+      "player": 1,
+      "response": "010401"
+    },
+    {
+      "name": "SelectPosition",
+      "player": 1,
+      "response": "04000000"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectIdleCmd",
+      "player": 0,
+      "response": "01000600"
+    },
+    {
+      "name": "SelectUnselectCard",
+      "player": 0,
+      "response": "0100"
+    },
+    {
+      "name": "SelectUnselectCard",
+      "player": 0,
+      "response": "0100"
+    },
+    {
+      "name": "SelectPlace",
+      "player": 0,
+      "response": "000403"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectEffectYn",
+      "player": 0,
+      "response": "00000000"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectIdleCmd",
+      "player": 0,
+      "response": "06000000"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectBattleCmd",
+      "player": 0,
+      "response": "01000000"
+    },
+    {
+      "name": "SelectCard",
+      "player": 0,
+      "response": "0100"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectBattleCmd",
+      "player": 0,
+      "response": "00000000"
+    },
+    {
+      "name": "SelectCard",
+      "player": 0,
+      "response": "0102"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectCard",
+      "player": 0,
+      "response": "0100"
+    },
+    {
+      "name": "SelectPlace",
+      "player": 0,
+      "response": "000403"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectBattleCmd",
+      "player": 0,
+      "response": "01000000"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectBattleCmd",
+      "player": 0,
+      "response": "00000000"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectUnselectCard",
+      "player": 0,
+      "response": "0100"
+    },
+    {
+      "name": "SelectUnselectCard",
+      "player": 0,
+      "response": "0100"
+    },
+    {
+      "name": "SelectPlace",
+      "player": 0,
+      "response": "000404"
+    },
+    {
+      "name": "SelectPlace",
+      "player": 0,
+      "response": "000403"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectBattleCmd",
+      "player": 0,
+      "response": "01000000"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectBattleCmd",
+      "player": 0,
+      "response": "01000000"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectBattleCmd",
+      "player": 0,
+      "response": "01000000"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 0,
+      "response": "ffffffff"
+    },
+    {
+      "name": "SelectChain",
+      "player": 1,
+      "response": "ffffffff"
+    }
+  ]
+}

@@ -50,23 +50,29 @@ def features(p):
     return result
 
 
-def branch_pairs(runs, scores):
+def branch_pairs(runs, scores, tiebreaks=None):
     groups = defaultdict(dict)
+    tiebreaks = tiebreaks or {}
     for terminal, branches in runs:
+        tie = tiebreaks.get(terminal)
+        rank = (scores[terminal], tie["score"] if tie else 0)
         for prefix, action, position in branches:
             observed = groups[prefix]
-            score = scores[terminal]
-            if action not in observed or score > observed[action][0]:
-                observed[action] = (score, position)
+            if action not in observed or rank > observed[action][0]:
+                observed[action] = (rank, position, tie)
     for prefix, branches in sorted(groups.items()):
-        ranked = sorted(branches.items(), key=lambda entry: (-entry[1][0], entry[0]))
+        ranked = sorted(branches.items(), key=lambda entry: (-entry[1][0][0], -entry[1][0][1], entry[0]))
         if len(ranked) < 2:
             continue
-        _, (best, high) = ranked[0]
-        for _, (score, low) in ranked[1:]:
-            gap = round(best - score, 3)
-            if gap >= 0.2 and features(high) != features(low):
-                yield {"prefix": prefix, "high": high, "low": low, "gap": gap}
+        _, (best, high, high_tie) = ranked[0]
+        for _, (score, low, low_tie) in ranked[1:]:
+            gap = round(best[0] - score[0], 3)
+            same_score = gap == 0 and high_tie is not None and low_tie is not None and best[1] > score[1]
+            if (gap >= 0.2 or same_score) and features(high) != features(low):
+                pair = {"prefix": prefix, "high": high, "low": low, "gap": gap}
+                if same_score:
+                    pair["tiebreak"] = {"high": high_tie, "low": low_tie}
+                yield pair
 
 
 def fit(pairs, seed):
@@ -186,7 +192,7 @@ def main():
                 terminals, runs = (result["training"][key] for key in ("terminals", "runs"))
                 scores = engine.score(terminals) if terminals else []
                 demonstration = verify_guide(result, guide, terminals, scores, case["scenario"]) if guide else None
-                generated = list(branch_pairs(runs, scores))
+                generated = list(branch_pairs(runs, scores, {i: t["tiebreak"] for i, t in enumerate(terminals) if "tiebreak" in t}))
                 for pair in generated:
                     samples.write(json.dumps({"case": index, **pair}, separators=(",", ":")) + "\n")
                 pairs.extend(generated)

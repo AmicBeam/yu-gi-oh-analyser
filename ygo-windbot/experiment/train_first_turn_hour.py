@@ -58,7 +58,7 @@ def train_case(case, args, budget_ms):
     probes = [pressure_trace(trace) for trace in result["coverage"]]
     activated = sorted({item["card"] for probe in probes for item in probe["activations"]})
     landed = sorted({item["card"] for probe in probes for item in probe["activations"] if item["landed"]})
-    return {"case": case, "group": hand_key(case["hand"]), "pairs": list(branch_pairs(runs, scores)),
+    return {"case": case, "group": hand_key(case["hand"]), "pairs": list(branch_pairs(runs, scores, {i: t["tiebreak"] for i, t in enumerate(terminals) if "tiebreak" in t})),
             "attempts": result["attempts"], "settled": len(runs), "best_score": max(scores),
             "witness_score": scores[result["witness"]], "activated": activated, "landed": landed,
             "unsupported_prompts": result["unsupported_prompts"]}

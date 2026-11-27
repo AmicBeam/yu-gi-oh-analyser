@@ -422,7 +422,7 @@ namespace WindBot.Game.AI.Decks
                 {
                     terminal.Score = EndBoardScore(terminal, true);
                     if (retained == null || terminal.Score > retained.Score
-                        || terminal.Score == retained.Score && PreferEnd(terminal, retained))
+                        || terminal.Score == retained.Score && PreferScoredEnd(terminal, retained))
                         retained = terminal;
                 }
                 floor = Math.Max(current, retained?.Score ?? _boardPlan.Score);
@@ -435,7 +435,7 @@ namespace WindBot.Game.AI.Decks
             bool improved = candidate.Score > floor || candidate.Score == floor && retained != null
                 && ((candidate.Terminal.Set & SetChallenge) > (retained.Set & SetChallenge)
                     || CompareCaesarTiming(candidate.Terminal, retained) > 0)
-                && PreferEnd(candidate.Terminal, retained);
+                && PreferScoredEnd(candidate.Terminal, retained);
             TracePlanner("draw-replan", string.Join(" ", floor, candidate.Score,
                 improved ? "upgrade" : "keep", timer.ElapsedMilliseconds));
             return improved ? candidate : null;
@@ -803,21 +803,21 @@ namespace WindBot.Game.AI.Decks
                 {
                     var first = ComboSuccessors(position).Where(next => PlanOffered(next.Move)).ToList();
                     var replay = ReplayCachedOpening(first, known.Moves, timer, BoardSearchDeadline(400));
-                    if (replay.Count == 0 || !PreferEnd(alternative.Terminal, replay[0]))
+                    if (replay.Count == 0 || !PreferScoredEnd(alternative.Terminal, replay[0]))
                         return null;
                 }
             }
-            else if (!PreferEnd(alternative.Terminal, known.Terminal))
+            else if (!PreferScoredEnd(alternative.Terminal, known.Terminal))
                 return null;
             TracePlanner("preferred-equal-plan", alternative.Score.ToString());
             return alternative;
         }
 
-        private static bool BetterBoardPlan(PlanResult candidate, PlanResult incumbent)
+        private bool BetterBoardPlan(PlanResult candidate, PlanResult incumbent)
         {
             if (candidate.Score != incumbent.Score)
                 return candidate.Score > incumbent.Score;
-            return PreferEnd(candidate.Terminal, incumbent.Terminal);
+            return PreferScoredEnd(candidate.Terminal, incumbent.Terminal);
         }
 
         private PlanResult RefineEngineChoice(PlanResult incumbent, Stopwatch timer, int timeLimitMs)

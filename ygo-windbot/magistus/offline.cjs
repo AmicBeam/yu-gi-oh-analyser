@@ -5,7 +5,8 @@ const path = require('node:path');
 const { createHash } = require('node:crypto');
 const { parseArgs } = require('node:util');
 const { loadEngine, rollout, compare } = require('../../skills/ygo-deck-analyze/scripts/search-hand.cjs');
-const { ownPolicy, opponentChoice } = require('../../skills/ygo-deck-analyze/scripts/handrip-profile.cjs');
+const { magistusTie } = require('../turn-evidence.cjs');
+const { card, trap, ownPolicy, opponentChoice } = require('../../skills/ygo-deck-analyze/scripts/handrip-profile.cjs');
 const { UnsupportedPrompt } = require('../tests/engine-search-protocol.cjs');
 const { DRAW_COST_TENTHS, PROMOTION_RULE, adjusted, judge } = require('./promotion.cjs');
 
@@ -166,7 +167,12 @@ function execute(engine, scene, settings) {
         engine.engineErrors.clear();
         throw new Error(errors.join('\n'));
     }
-    if (result) result.decisions = decisions;
+    if (result) {
+        result.decisions = decisions;
+        result.tiebreak = magistusTie(card, trap, { hand: result.hand,
+            field: result.board.map(code => ({ code })), spells: result.spells.map(code => ({ code })),
+            state: { events: result.events }, secondInterrupted: result.traps.length > 0 }, result);
+    }
     return result;
 }
 
@@ -185,7 +191,7 @@ function order(a, b) {
         const boardDifference = Number(hasBoard(b)) - Number(hasBoard(a));
         if (boardDifference) return boardDifference;
     }
-    return a.draws - b.draws || compare(a, b);
+    return a.draws - b.draws || compare(a, b) || (b.tiebreak?.score ?? 0) - (a.tiebreak?.score ?? 0);
 }
 
 function play(engine, scene, model, attempts, budget, branching, seed, mixRules = false) {
@@ -239,6 +245,7 @@ function brief(run) {
         score, lost, extra, draws, own_draws, board, summons, traps, nibiru_stopped,
         draw_phase_transforms, droll_access, little_knight, reward: reward(run.result),
         stopped_immediately: Boolean(run.result.stopped_immediately), has_board: hasBoard(run.result),
+        tiebreak: run.result.tiebreak,
     } };
 }
 

@@ -5,19 +5,24 @@ const { nameOf, UnsupportedPrompt } = require('../tests/engine-search-protocol.c
 const { optionsFor } = require('../../skills/ygo-deck-analyze/scripts/search-hand.cjs');
 const { standardChooser } = require('./train.cjs');
 const { update, features } = require('./full-train.cjs');
+const { mergeAmazoness } = require('../Models/pack-turn-models.cjs');
+const { MainPhaseLethal } = require('./main-phase-lethal.cjs');
 const { C, L, F, amazon, normal, choices, searchPolicy, attackProjection } = require('./duel-policy.cjs');
 
 class AmazonessPolicy {
-    constructor(seat, cardReader, model, log) {
+    constructor(seat, cardReader, model, log, extra = []) {
         this.seat = seat;
         this.cardReader = cardReader;
-        this.model = model;
+        this.model = model && mergeAmazoness(model);
         this.log = log;
         this.zones = [[[],[]], [[],[]]];
         this.hand = [];
         this.grave = [];
         this.repeat = new Map();
         this.firstChoice = true;
+        this.extra = [...extra];
+        this.lethal = new MainPhaseLethal();
+        this.lethal.reset();
         this.state = { bot:seat, cardReader, turn:0, phase:0, chains:new Map(), spentBaronne:new Set(), enemySummons:0,
             draw:0, enemyDraws:0, damage:0, lp:[8000,8000], startOppCount:0, interactions:0, trace:[],
             handOrigins:[], declarations:[], searchPolicy };
@@ -53,10 +58,17 @@ class AmazonessPolicy {
             state.lp=[msg.startLp0,msg.startLp1];
             break;
         case 'NewTurn':
+            this.lethal.reset();
             this.repeat.clear();
             if (state.turn) this.guide=null;
             break;
         case 'Move':
+            if (this.own(msg.previous.controller) && msg.previous.location === L.extra) {
+                const index = this.extra.indexOf(normal(msg.code));
+                if (index >= 0) this.extra.splice(index, 1);
+            }
+            if (this.own(msg.current.controller) && msg.current.location === L.extra && msg.code)
+                this.extra.push(normal(msg.code));
             fromTo(msg.previous,(area,index,field)=>{ if (field) delete area[index]; else area.splice(index,1); });
             fromTo(msg.current,(area,index,field,position)=>{
                 if (field) area[index]={code:msg.code,position};
@@ -103,6 +115,11 @@ class AmazonessPolicy {
                 !view.hand.some(c=>conflicts.includes(c))) this.guide=standardChooser();
         }
         try {
+            const lethal = this.lethal.choose(msg, name, s, view, this.extra);
+            if (lethal) {
+                this.log({ event: 'amazoness-lethal-plan', prompt: name });
+                return lethal;
+            }
             if (name === 'SelectPosition') {
                 const [position] = choices(msg, s, view);
                 return position ? this.commit(name, position, 'position-rules') : this.safeResponse(msg, name);
@@ -119,7 +136,7 @@ class AmazonessPolicy {
             const options=choices(msg,s,view);
             const allowed=this.preserveLethal(msg,name,options,view);
             if (!allowed.length) return this.safeResponse(msg,name);
-            const weights=this.model?.weights?.[this.seat];
+            const weights=this.model?.weights;
             let best=-Infinity, selected;
             for (const option of allowed) {
                 const seen=this.repeat.get(name+'|'+option.key)??0;
@@ -137,6 +154,18 @@ class AmazonessPolicy {
 
     preserveLethal(msg,name,options,view) {
         const s=this.state;
+        if (name === 'SelectBattleCmd' && !view.enemy.length) {
+            const attacks = msg.attackableCards.filter(c=>c.directAttack).map(c=>({
+                sequence:c.sequence,
+                attack:view.own.find(a=>a.location===L.monster && a.sequence===c.sequence)?.attack ?? 0,
+            }));
+            const opponentLp=s.lp[1-this.seat];
+            if (opponentLp>0 && attacks.reduce((sum,c)=>sum+Math.max(0,c.attack),0)>=opponentLp) {
+                const best=attacks.reduce((a,b)=>a.attack>=b.attack?a:b);
+                const attack=options.find(o=>o.key.startsWith('attack:') && Number(o.key.split(':')[2])===best.sequence);
+                if (attack) return [attack];
+            }
+        }
         if (s.turn<2 || s.turnPlayer!==this.seat || s.phase!==F.main1 ||
             view.enemy.some(c=>c.location===L.spell || !(c.position&5))) return options;
         const attackers=view.own.filter(c=>c.location===L.monster && (!s.chiefLock || amazon.has(c.code)));

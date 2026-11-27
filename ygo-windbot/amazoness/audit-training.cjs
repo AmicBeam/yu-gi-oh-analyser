@@ -19,7 +19,8 @@ async function main() {
     assert.equal(model.deckSha256,inputs.deckSha256);
     assert.equal(model.policySha256,inputs.policySha256);
     assert.equal(model.trainerSha256,inputs.trainerSha256);
-    assert([0,1].every(bot=>Object.values(model.weights[bot]).every(Number.isFinite)));
+    assert((model.version === 2 ? [model.weights] : Object.values(model.weights)).every(weights =>
+        Object.values(weights).every(Number.isFinite)));
     const keys = [...inputs.train,...inputs.holdout].map(input => input.main.slice(0,input.bot?6:5)
         .sort((a,b)=>a-b).join(','));
     assert.equal(keys.length,new Set(keys).size);
@@ -48,7 +49,7 @@ async function main() {
             else replays[role]++;
         }
         const {rule,candidate,reference}=traces;
-        if (!candidate?.outcome || rule?.outcome && compare(candidate.outcome,rule.outcome)<0)
+        if (!candidate?.outcome || rule?.outcome && compare(candidate.outcome,rule.outcome,input.bot===0)<0)
             baselineRegressions.push(input.id);
         if (input.bot===1 && reference?.outcome?.[0]===1 && candidate?.outcome?.[0]!==1) missedLethal.push(input.id);
     }

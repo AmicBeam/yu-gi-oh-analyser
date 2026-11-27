@@ -8,6 +8,8 @@ const P = require('ygopro-msg-encode');
 const coreAPI = require('koishipro-core.js');
 const { nameOf, UnsupportedPrompt } = require('../tests/engine-search-protocol.cjs');
 const { loadEngine, optionsFor } = require('../../skills/ygo-deck-analyze/scripts/search-hand.cjs');
+const { amazonessTie } = require('../turn-evidence.cjs');
+const { compareTurn, turnAxis } = require('../turn-objective.cjs');
 const { C, L, F, amazon, normal, searchPolicy, choices } = require('./duel-policy.cjs');
 
 const MONSTER_QUERY = P.OcgcoreCommonConstants.QUERY_CODE | P.OcgcoreCommonConstants.QUERY_POSITION |
@@ -89,10 +91,7 @@ function update(msg,name,state,getView) {
     if (name==='NewPhase') {
         state.phase=msg.phase;
         if (msg.phase===F.main1 && state.turnPlayer===bot) state.startOppCount=getView().enemy.length;
-        if (msg.phase===F.main2 && state.turnPlayer===bot) {
-            state.main2=true;
-            state.clearedBeforeMain2=state.startOppCount-getView().enemy.length;
-        }
+        if (msg.phase===F.main2 && state.turnPlayer===bot) state.main2=true;
     }
     if (name==='Damage') { state.lp[msg.player]-=msg.value; if (msg.player===enemy && state.turnPlayer===bot) state.damage+=msg.value; }
     if (name==='Recover') state.lp[msg.player]+=msg.value;
@@ -107,9 +106,14 @@ function update(msg,name,state,getView) {
         state.trace.push([name,msg.code,msg.controller,msg.location,msg.desc,msg.chainCount,state.turn,state.phase]);
     }
     if (name==='ChainSolving') state.solving=state.chains.get(msg.chainCount);
+    if (name==='SpSummoning' && msg.controller===bot && [C.rescue,C.formation].includes(state.solving?.code))
+        (state.realizedResources ??= []).push(normal(msg.code));
     if (name==='ChainDisabled'||name==='ChainNegated') {
         const link=state.chains.get(msg.chainCount);
-        if (link?.player===enemy) state.interactions++;
+        if (link?.player===enemy) {
+            state.interactions++;
+            (state.deniedWindows ??= []).push(link.code);
+        }
         if (link) link.denied=true;
         state.trace.push([name,msg.chainCount,link?.code]);
     }
@@ -261,9 +265,11 @@ function rollout(engine,input,mode) {
         const view=visible(duel,state.bot);
         const breakdown=boardScore(view,state);
         const points=Object.values(breakdown).reduce((a,b)=>a+b,0)-50*state.enemyDraws;
-        const outcome=input.bot===1 ? [won,state.clearedBeforeMain2??state.startOppCount-view.enemy.length,state.damage,points] :
-            [won,state.interactions,Math.max(0,state.lp[state.bot]),ourEndboard?.points??points,points];
-        return { outcome, main2:!!state.main2, turn:state.turn, beforeOpp:ourEndboard, board:view.own.map(c=>c.code),
+        const tiebreak = amazonessTie(C, view, state, breakdown);
+        const removed = state.startOppCount - view.enemy.length;
+        const outcome=input.bot===1 ? [won, removed, state.damage, points, tiebreak.score, 100 * removed + points] :
+            [won,state.interactions,Math.max(0,state.lp[state.bot]),ourEndboard?.points??points,points,tiebreak.score];
+        return { outcome, tiebreak, main2:!!state.main2, turn:state.turn, beforeOpp:ourEndboard, board:view.own.map(c=>c.code),
             breakdown, redraws:state.enemyDraws, interactions:state.interactions, hit:state.hit||0, trace:state.trace, steps, wire };
     };
     try {
@@ -291,6 +297,8 @@ function rollout(engine,input,mode) {
                 } else {
                     const view=visible(duel,state.bot);
                     let options=mode.replay && name==='SelectPosition' ? optionsFor(msg,state) : choices(msg,state,view);
+                    if (name === 'SelectIdleCmd' && msg.canBp && msg.canEp && !options.some(o => o.key === 'end'))
+                        options.push({ key:'end', weight: 1, response:msg.prepareResponse(P.IdleCmdType.TO_EP) });
                     if (mode.actionFilter) options=mode.actionFilter(msg,name,options,view,state);
                     if (!options.length) return {error:'NoPolicyAction:'+name};
                     options=options.map(o=>{
@@ -334,33 +342,30 @@ function verified(engine,input,result,actionFilter) {
         duplicate.wire.join('|')===result.wire.join('|') && duplicate.outcome.join(',')===result.outcome.join(','));
 }
 
-function compare(a, b) {
-    if (a[0] === 1 && b[0] === 1) return 0;
-    for (let axis = 0; axis < a.length; axis++) {
-        if (a[axis] !== b[axis]) return a[axis] - b[axis];
-    }
-    return 0;
+function compare(a, b, opening = false) {
+    return compareTurn(a, b, opening);
 }
 
-function buildPairs(runs) {
+function buildPairs(runs, opening) {
     const byPrefix = new Map();
     for (const run of runs) {
         for (const step of run.steps) {
             if (!byPrefix.has(step.prefix)) byPrefix.set(step.prefix, new Map());
             const actions = byPrefix.get(step.prefix);
             const previous = actions.get(step.action);
-            if (!previous || compare(run.outcome, previous.outcome) > 0)
-                actions.set(step.action, { features:step.features, outcome:run.outcome });
+            if (!previous || compare(run.outcome, previous.outcome, opening) > 0)
+                actions.set(step.action, { features:step.features, outcome:run.outcome, tiebreak:run.tiebreak });
         }
     }
     const pairs = [];
-    for (const actions of byPrefix.values()) {
-        const [best, ...alternatives] = [...actions.values()].sort((a,b)=>compare(b.outcome,a.outcome));
+    for (const [prefix, actions] of byPrefix) {
+        const [best, ...alternatives] = [...actions.values()].sort((a,b)=>compare(b.outcome,a.outcome, opening));
         for (const other of alternatives) {
-            const axis = best.outcome.findIndex((value,i)=>value!==other.outcome[i]);
-            if (axis >= 0 && compare(best.outcome, other.outcome) > 0 &&
+            const axis = turnAxis(best.outcome, other.outcome, opening);
+            if (axis >= 0 && compare(best.outcome, other.outcome, opening) > 0 &&
                 best.features.join('|') !== other.features.join('|')) {
-                pairs.push({ high:best.features, low:other.features, axis });
+                pairs.push({ prefix, high:best.features, low:other.features, axis,
+                    ...(axis === (opening ? 5 : 4) && { tiebreak: { high:best.tiebreak, low:other.tiebreak } }) });
             }
         }
     }
@@ -368,6 +373,7 @@ function buildPairs(runs) {
 }
 
 function search(engine,input,{attempts,caseMs,actionFilter}) {
+    const opening = input.bot === 0;
     const random=randomFrom(input.seed), deadline=Date.now()+caseMs;
     const lines=[], seen=new Set(), errors={};
     for (let i=0;i<attempts&&Date.now()<deadline;i++) {
@@ -380,7 +386,7 @@ function search(engine,input,{attempts,caseMs,actionFilter}) {
         if (seen.has(key)) continue;
         seen.add(key);
         lines.push(result);
-        lines.sort((a,b)=>compare(b.outcome,a.outcome));
+        lines.sort((a,b)=>compare(b.outcome,a.outcome, opening));
     }
     const leaders=lines.slice(0,12);
     // Keep examples on both sides of a reachable lethal boundary for focused training.
@@ -389,7 +395,7 @@ function search(engine,input,{attempts,caseMs,actionFilter}) {
     }
     const eligible=[...new Set(leaders)].filter(result=>verified(engine,input,result,actionFilter));
     return { settled:lines.length, replayed:eligible.length, errors, best:eligible[0],
-        pairs:buildPairs(eligible) };
+        pairs:buildPairs(eligible, opening) };
 }
 
 function fit(rows,seed) {
@@ -507,14 +513,13 @@ async function main() {
         console.log(JSON.stringify({id:input.id,bot:input.bot,settled:r.settled,replayed:r.replayed,
             outcome:r.best?.outcome,pairs:r.pairs.length,errors:r.errors}));
     }
-    const weights={};
-    for (const bot of [0,1]) weights[bot]=fit(results.filter((_,i)=>cases.train[i].bot===bot).flatMap(r=>r.pairs),opts.seed+bot);
-    write(at('candidate.json'),{version:1,objective:'amazoness-complete-duel-v1',deckSha256:inputs.deckSha256,
+    const weights=fit(results.flatMap(r=>r.pairs),opts.seed);
+    write(at('candidate.json'),{version:2,objective:'amazoness-complete-duel-v2',deckSha256:inputs.deckSha256,
         trainerSha256:inputs.trainerSha256,policySha256:inputs.policySha256,weights});
     const report=[];
     for (const input of [...cases.holdout,...directed]) {
         const rule=rollout(engine,input,{deadline:Date.now()+opts.caseMs});
-        const candidate=rollout(engine,input,{model:weights[input.bot],deadline:Date.now()+opts.caseMs});
+        const candidate=rollout(engine,input,{model:weights,deadline:Date.now()+opts.caseMs});
         const reference=search(engine,input,opts);
         if (engine.engineErrors.size) throw new Error([...engine.engineErrors].slice(0,6).join('\n'));
         const row={id:input.id,bot:input.bot,rule:rule.outcome,candidate:candidate.outcome,reference:reference.best?.outcome,
@@ -532,4 +537,4 @@ async function main() {
 }
 
 if (require.main===module) main().catch(error=>{console.error(error.stack);process.exitCode=1;});
-module.exports={rollout,verified,deckFrom,makeCases,directedCases,update,features,compare,search};
+module.exports={rollout,verified,deckFrom,makeCases,directedCases,update,features,compare,search,boardScore};

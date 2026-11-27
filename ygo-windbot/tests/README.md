@@ -166,3 +166,40 @@ python3 ygo-windbot/tests/compare_twins_planner.py \
   --output /tmp/twins-state-tactics --single-twin-board \
   --max-gap 0.4
 ```
+
+## 三份录像的决策回归
+
+用例保留引擎种子、双方牌序和分岔点之前的响应。参考模式重放完整见证。策略模式从分岔点开始收集实际执行器返回的响应，陪练独立处理合法的干扰提示。录像牌序只供测试引擎建立局面。策略在单座位上收到自己的牌和对手的公开消息。
+
+| 用例 | 策略验收 |
+| --- | --- |
+| 大贤者第 2 回合 | 大义贼解放黑混沌和四花，跳过战阶，以 8000 LP 留大义贼和装备少女的狞猛龙。对手放行后续动作。 |
+| 亚马逊第 2 回合 | 救出剧回收鹰身，战士长和剑圣等六只怪兽直击合计 8300。陪练会发动魔法效果之剑与山雀。 |
+| 双子2第 3 回合 | 先大蓝苏大红，后跳霜精，狮鹫、夜幕与桑妮完成 8400。陪练让黑魔女复活并选择守备表示。 |
+| 双子2第 3 回合踩点分支 | 参考回放验收夜幕战破、黑魔女复活、踩点在结束阶段破坏，己方留夜幕与双盖。 |
+
+使用与录像对应的规则引擎、双子扩展和预览卡扩展。将本仓库的 WindBot 覆盖文件放进测试用 WindBot 源码后构建，并在可执行文件旁准备 `cards.cdb`、`Decks/AI_Twins2.ydk` 和 `Dialogs`。
+
+```sh
+node ygo-windbot/Models/pack-turn-models.cjs /path/to/windbot/Models
+NODE_PATH=/path/to/fixture/node_modules node ygo-windbot/tests/turn-policy-replay.cjs \
+  --fixture /path/to/fixture --data /path/to/ygopro --data /path/to/preview-overlay \
+  --models /path/to/windbot/Models --windbot /path/to/windbot/WindBot.exe
+```
+
+省略 `--windbot` 时双子只跑引擎参考回放。三个执行器的本地验收要求输出三个 `mode: policy` 结果。双子踩点分支另外输出 `mode: reference`。
+
+## 通用场景模型对拍
+
+三套牌共用 `experiment/train-unified-turn.cjs`。从牌表和固定种子生成先攻、先攻吃坑、后攻斩杀、后攻解场、后续回合续展及吃坑六类场景。训练、留出使用不同起手。训练样本要求同一响应前缀、不同合法动作、双方未斩杀且主分相同，并逐条重放两边对照子评分。模型之间的本地对拍使用实际执行器，双子2由 WindBot 通过本地座位协议出牌。
+
+```sh
+NODE_PATH=/path/to/fixture/node_modules node ygo-windbot/experiment/train-unified-turn.cjs \
+  --deck Magistus --fixture /path/to/fixture --data /path/to/ygopro \
+  --data /path/to/preview-overlay --models /path/to/runtime/Models \
+  --output /path/to/new/audit --count 24 --attempts 50 --audit 24
+```
+
+将 `--deck` 换成 `Amazoness` 或 `Twins2` 即可对拍另外两套。双子另外传入 `--windbot`、`--scorer` 和 `--cards`。每套权重的最小样本量为 36 对训练、18 对留出，分别来自至少 12 手和 8 手。晋级要求留出的同主分排序有净改善，六类实盘比较赢多输少，已有斩杀没有丢失，并完整结算。重试支持用 `--training-source` 复用旧训练分片，再换新种子生成与已有起手隔离的留出，并用 `--scale` 缩小更新幅度。仅晋级的结果可交给 `experiment/promote-unified-turn.cjs RUN LOCAL_MODELS` 写入本地运行目录和打包校准文件。录像见证仍作为单点诊断工具，权重晋级使用通用场景。
+
+双子2专项续训可加 `--opening-focus --terminal-ties`。前者只提高训练集中两小双子吃泡影、初诣搭少补点起手的覆盖。留出仍按六类通用场景生成。后者仅拟合终场同分排序，沿用原权重筛选搜索分支、排序战斗动作。统一文件内的 `tieFrontier` 只在双子2的主分和规则子评分同时相同后参与比较。

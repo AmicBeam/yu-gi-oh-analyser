@@ -7,6 +7,8 @@ const { performance } = require('node:perf_hooks');
 const P = require('ygopro-msg-encode');
 const coreApi = require('koishipro-core.js');
 const { engineOptions, nameOf, UnsupportedPrompt } = require('../tests/engine-search-protocol.cjs');
+const { twinsTie } = require('../turn-evidence.cjs');
+const { compareTurn, turnAxis, verifyTiedRoutes } = require('../turn-objective.cjs');
 const { twinsPolicy, position } = require('../tests/twins-engine-reference.cjs');
 
 const BOT = 1, OPPONENT = 0;
@@ -48,9 +50,9 @@ function field(duel, player, queryFlag = 0x30f | 0x4000) {
     }).cards.map((card, sequence) => ({ ...card, sequence, location })).filter(card => card.code));
 }
 
-function stateFeatures(duel) {
-    const own = field(duel, BOT);
-    const enemy = field(duel, OPPONENT);
+function stateFeatures(duel, seat = BOT) {
+    const own = field(duel, seat);
+    const enemy = field(duel, 1-seat);
     return {
         bodies: own.filter(card => card.location === MONSTER).length,
         enemy: enemy.filter(card => card.location === MONSTER).length,
@@ -81,8 +83,7 @@ function choices(msg, state) {
         && typeof msg.playerView === 'function' ? msg.playerView(BOT) : msg;
     const result = engineOptions(view, state, botPolicy);
     if (name === 'SelectIdleCmd' && state.phase === MAIN1 && msg.canBp) {
-        // Nonlethal branches reach main 2 by actually taking the battle phase.
-        return result.filter(option => option.key !== 'end').map(option =>
+        return result.map(option =>
             option.key === 'battle' ? { ...option, weight: state.field.size ? 18 : 1 } : option);
     }
     return result;
@@ -187,13 +188,13 @@ function weighted(options, random) {
     return options.find(item => (ticket -= item.weight) < 0) || options.at(-1);
 }
 
-function features(state, own, prompt, key) {
+function features(state, own, prompt, key, seat = BOT) {
     return [`a:${prompt}:${key}`, `phase:${state.phase}:${key}`,
         `bodies:${Math.min(4,own.bodies)}:${key}`, `enemy:${Math.min(4,own.enemy)}:${key}`,
         `backrow:${Math.min(4,own.backrow)}:${key}`,
         `atk:${Math.min(8,Math.floor(own.attack/1000))}:${key}`,
-        `their-lp:${Math.min(8,Math.max(0,Math.ceil(state.lp[OPPONENT]/1000)))}:${key}`,
-        `our-lp:${Math.min(8,Math.max(0,Math.ceil(state.lp[BOT]/1000)))}:${key}`,
+        `their-lp:${Math.min(8,Math.max(0,Math.ceil(state.lp[1-seat]/1000)))}:${key}`,
+        `our-lp:${Math.min(8,Math.max(0,Math.ceil(state.lp[seat]/1000)))}:${key}`,
         `post-hit:${state.interrupted > 0}:${key}`, `normal:${state.normalUsed}:${key}`,
         ...own.enemyBoard.map(id => `visible:${id}:${key}`)];
 }
@@ -206,11 +207,14 @@ function rollout(core, input, random, deadline, parent, pivot) {
         declarations: [...new Set(input.main)] };
     const wire = [], steps = [];
     let follow = 1;
-    const terminal = (win, remaining) => ({
-        outcome: [win, (state.before ?? input.field.length) - remaining, state.damage, 0],
-        main2: state.remaining !== undefined, board: win ? null : position(duel, state, BOT),
-        interrupted: state.interrupted, effectClears: state.effectClears, wire, steps,
-    });
+    const terminal = (win, remaining) => {
+        const board = win ? null : position(duel, state, BOT);
+        const tiebreak = board && twinsTie(board, { hardHit: state.interrupted > 0 });
+        const removed = (state.before ?? input.field.length) - remaining;
+        return { outcome: [win, removed, state.damage, 0, tiebreak?.score ?? 0, removed],
+            tiebreak, main2: state.remaining !== undefined, board, interrupted: state.interrupted,
+            effectClears: state.effectClears, wire, steps };
+    };
     try {
         for (let i = 0; i < 1800 && performance.now() < deadline; i++) {
             for (const msg of duel.process().messages || []) {
@@ -222,7 +226,7 @@ function rollout(core, input, random, deadline, parent, pivot) {
                     if (msg.player === OPPONENT) return terminal(-1, field(duel, OPPONENT).length);
                     return null;
                 }
-                if (state.turn === 3) return state.remaining === undefined ? null : terminal(0, state.remaining);
+                if (state.turn === 3) return terminal(0, field(duel, OPPONENT).length);
                 if (!(msg instanceof P.YGOProMsgResponseBase)) continue;
                 const offset = wire.length;
                 const previous = parent && offset < pivot.offset ? parent.wire[offset] : undefined;
@@ -273,11 +277,7 @@ function rollout(core, input, random, deadline, parent, pivot) {
     }
 }
 
-function compare(a,b) {
-    if (a[0] === 1 && b[0] === 1) return 0;
-    for (let i=0;i<a.length;i++) if (a[i]!==b[i]) return a[i]-b[i];
-    return 0;
-}
+const compare = compareTurn;
 
 function buildPairs(runs) {
     const groups=new Map();
@@ -286,16 +286,18 @@ function buildPairs(runs) {
         const choices=groups.get(step.prefix);
         const old=choices.get(step.action);
         if (!old || compare(r.outcome,old.outcome)>0)
-            choices.set(step.action,{features:step.features,outcome:r.outcome});
+            choices.set(step.action,{features:step.features,outcome:r.outcome,tiebreak:r.tiebreak,tieVerified:r.tieVerified});
     }
     const pairs=[];
-    for (const choices of groups.values()) {
+    for (const [prefix, choices] of groups) {
         const lines=[...choices.values()].sort((a,b)=>compare(b.outcome,a.outcome));
         const high=lines[0];
         for (const low of lines.slice(1)) {
-            const axis=high.outcome.findIndex((value,i)=>value!==low.outcome[i]);
-            if (axis>=0 && compare(high.outcome,low.outcome)>0 && high.features.join('|')!==low.features.join('|'))
-                pairs.push({ high:high.features, low:low.features, axis });
+            const axis=turnAxis(high.outcome, low.outcome);
+            if (axis>=0 && (axis!==4 || high.tieVerified && low.tieVerified) &&
+                compare(high.outcome,low.outcome)>0 && high.features.join('|')!==low.features.join('|'))
+                pairs.push({ prefix, high:high.features, low:low.features, axis,
+                    ...(axis === 4 && {tiebreak: { high:high.tiebreak, low:low.tiebreak }}) });
         }
     }
     return pairs;
@@ -341,9 +343,14 @@ async function main() {
         if (result.status!==0) throw new Error(result.stderr||String(result.error));
         const scores=result.stdout.trim().split(/\r?\n/).map(Number);
         if (scores.length!==terminals.length||scores.some(x=>!Number.isFinite(x))) throw new Error('invalid main2 scores');
-        terminals.forEach((r,i)=>{r.outcome[3]=scores[i];});
+        terminals.forEach((r,i)=>{ r.outcome[3]=scores[i]; r.outcome[5]=r.outcome[1]+scores[i]; });
     }
     scoreMain2(settled);
+    verifyTiedRoutes(settled, route => {
+        const candidate = rollout(core, input, random, performance.now() + 350, route, {offset:Infinity});
+        if (candidate?.outcome[0] === 0) scoreMain2([candidate]);
+        return candidate;
+    });
     const best=[...runs].sort((a,b)=>compare(b.outcome,a.outcome))[0];
     const replay = best && rollout(core,input,random,performance.now()+3000,best,{offset:Infinity});
     if (replay?.outcome[0] === 0) scoreMain2([replay]);
@@ -360,4 +367,4 @@ async function main() {
 if (require.main === module)
     main().catch(error=>{console.error(error.stack);process.exitCode=1;});
 
-module.exports = { initialDuel, field, buildPairs, compare };
+module.exports = { initialDuel, field, buildPairs, compare, stateFeatures, features };

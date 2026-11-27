@@ -92,14 +92,14 @@ namespace WindBot.Game.AI.Decks
                 || OwnMainBeforeBattle() && Duel.MainPhase?.CanBattlePhase == true && CanFinishBattle(current))
                 return false;
             var lines = BattleClears(current).Where(OfferedInMainPhase).ToList();
-            long holdScore = lines.Any(clear => clear.SendCost != null) ? BattleClearScore(current, 0) : long.MinValue;
+            long holdScore = BattleClearScore(current, 0);
             BattleClear best = null;
             long bestScore = long.MinValue;
             double bestPreference = 0;
             foreach (BattleClear clear in lines)
             {
                 long score = EvaluateBattleClear(current, clear, 0, 0);
-                if (score < bestScore || clear.SendCost != null && score <= holdScore)
+                if (score < bestScore || score <= holdScore)
                     continue;
                 double preference = SecondTurnClearPreference(clear);
                 if (score > bestScore || preference > bestPreference)
@@ -525,6 +525,45 @@ namespace WindBot.Game.AI.Decks
                 || attack <= blocker.GetDefensePower())
                 return 0;
             return (blocker.IsAttack() ? attack - blocker.GetDefensePower() : 0) + tail;
+        }
+
+        private readonly HashSet<ClientCard> _enemySpecialSummonsThisTurn = new HashSet<ClientCard>();
+        private bool _scoutEndRemoval;
+
+        private bool CanLeaveForScout(ClientCard card) =>
+            _scoutEndRemoval && _enemySpecialSummonsThisTurn.Contains(card) && card.IsFaceup()
+                && !card.IsMonsterInvincible() && !card.IsFloodgate() && !card.IsMonsterDangerous();
+
+        private int ProjectedBattleClears(BattlePosition position)
+        {
+            var attackers = position.Field.Select(card => ProjectedAttack(card, position.LostEquips, null))
+                .Where(attack => attack > 0).OrderBy(attack => attack).ToList();
+            int cleared = 0;
+            foreach (var defender in position.Defenders.Where(card => card.IsFaceup()
+                && !card.IsMonsterInvincible() && !card.IsMonsterDangerous() && !CanLeaveForScout(card))
+                .OrderByDescending(card => card.GetDefensePower()))
+            {
+                int index = attackers.FindIndex(attack => attack > defender.GetDefensePower());
+                if (index < 0) continue;
+                attackers.RemoveAt(index);
+                cleared++;
+            }
+            return cleared;
+        }
+
+        private int SunnyGraveReserve(BattlePosition position)
+        {
+            if (!position.Grave.Any(card => card.IsCode(Sunny)))
+                return 0;
+            bool free = BattleRevivalZone(position.Field) != 0;
+            int otherLight = position.Grave.Where(card => !card.IsCode(Sunny, Engraver) && LightFiend(PlanCode(card)))
+                .Select(PlanCode).Distinct().Count();
+            bool engraver = position.Grave.Any(card => card.IsCode(Engraver));
+            bool revival = free && engraver && otherLight == 0 && BattleClearUnused(Engraver, 2);
+            bool fusion = free && !_planTwins && position.Field.Any(c => c.IsCode(Sequence) && RotationAllowed(c))
+                && (Bot.HasInExtra(LacrimaFusion) && otherLight + (engraver ? 1 : 0) == 1
+                    || Bot.HasInExtra(Desirae) && engraver && otherLight == 1);
+            return revival || fusion ? 1 : 0;
         }
 
         private long BattleClearScore(BattlePosition position, int steps)

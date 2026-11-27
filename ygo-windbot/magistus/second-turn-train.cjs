@@ -12,6 +12,8 @@ const { loadEngine } = require('../../skills/ygo-deck-analyze/scripts/search-han
 const { card, trap, drawTraps, settledScore } = require('../../skills/ygo-deck-analyze/scripts/handrip-profile.cjs');
 const { readDeck, randomFrom, shuffle, trapDeck } = require('./offline.cjs');
 const { MagistusPolicy } = require('./live-policy.cjs');
+const { magistusTie } = require('../turn-evidence.cjs');
+const { turnAxis, verifyTiedRoutes } = require('../turn-objective.cjs');
 const { VERSION } = require('./second-turn.cjs');
 
 const BOT = 1, OPPONENT = 0, MZONE = 4, SZONE = 8, MAIN1 = 4, MAIN2 = 256;
@@ -155,9 +157,12 @@ function run(engine, input, options) {
             ...c, owner: c.owner === BOT ? 0 : 1,
             equipCard: c.equipCard && { ...c.equipCard, controller: c.equipCard.controller === BOT ? 0 : 1 },
         }));
-        const main2Score = settledScore(own.filter(c => c.location === MZONE), policy.state.lost, 0, policy.state.draws, spells).score;
-        return { outcome: [win, cleared ?? initial - remaining, damage, main2Score - 5 * policy.state.draws],
-            main2: cleared !== undefined, interrupted: policy.secondInterrupted, effects, steps, wire };
+        const board = settledScore(own.filter(c => c.location === MZONE), policy.state.lost, 0, policy.state.draws, spells);
+        const tiebreak = magistusTie(card, trap, policy, board);
+        const retained = board.score - 5 * policy.state.draws;
+        const removed = initial - remaining;
+        return { outcome: [win, removed, damage, retained, tiebreak.score, 10 * removed + retained],
+            tiebreak, main2: cleared !== undefined, interrupted: policy.secondInterrupted, effects, steps, wire };
     };
     try {
         for (let i = 0; i < 1200 && Date.now() < options.deadline; i++) {
@@ -212,6 +217,7 @@ function repair(engine, input, config, deadline) {
     const reference = play(new Map()), pairs = [], runs = [];
     let attempts = 1;
     if (reference?.outcome) runs.push(reference);
+    const ties = [];
     const random = randomFrom(input.seed);
     const frontier = shuffle((reference?.steps || []).filter(s => s.alternatives.length), random).slice(0, 12);
     for (const step of frontier) for (const action of step.alternatives) {
@@ -224,11 +230,20 @@ function repair(engine, input, config, deadline) {
         branch.override = [step.offset, action];
         runs.push(branch);
         const sign = compare(branch.outcome, reference.outcome);
-        if (!sign || branch.main2 !== reference.main2 && branch.outcome[0] !== 1 && !branch.main2) continue;
-        const axis = branch.outcome.findIndex((value, i) => value !== reference.outcome[i]);
+        if (!sign) continue;
+        const axis = turnAxis(branch.outcome, reference.outcome);
         const high = sign > 0 ? taken.features : step.features, low = sign > 0 ? step.features : taken.features;
-        if (high.join('|') !== low.join('|')) pairs.push({ high, low, axis });
+        if (high.join('|') === low.join('|')) continue;
+        const prefix = createHash('sha256').update(reference.wire.slice(0, step.offset).join('|')).digest('hex').slice(0, 20);
+        const pair = { prefix, high, low, axis };
+        if (axis === 4) ties.push({ branch, sign, pair });
+        else pairs.push(pair);
     }
+    verifyTiedRoutes(runs, route => run(engine, input, { ...config, second, deadline: Date.now() + 350,
+        intervene: new Map(route.override ? [route.override] : []) }));
+    for (const { branch, sign, pair } of ties) if (reference.tieVerified && branch.tieVerified)
+        pairs.push({ ...pair, tiebreak: { high: (sign > 0 ? branch : reference).tiebreak,
+            low: (sign > 0 ? reference : branch).tiebreak } });
     const best = [...runs].sort((a, b) => compare(b.outcome, a.outcome))[0];
     const replay = best && run(engine, input, { ...config, second, deadline: Date.now() + 1200,
         intervene: new Map(best.override ? [best.override] : []) });
@@ -239,7 +254,7 @@ function repair(engine, input, config, deadline) {
         main2: runs.filter(r => r.main2).length, interrupted: runs.filter(r => r.interrupted).length,
         effects: runs.filter(r => r.effects).length, verified: Number(verified),
         unsupported: reference?.unsupported ? { [reference.unsupported]: 1 } : {},
-        best: verified ? best.outcome : null, pairs: verified ? shuffle(pairs, random).slice(0, 12) : [] };
+        best: verified ? best.outcome : null, tiebreak: verified ? best.tiebreak : undefined, pairs: verified ? shuffle(pairs, random).slice(0, 12) : [] };
 }
 
 function search(engine, input, config, deadline) {
@@ -251,18 +266,20 @@ function search(engine, input, config, deadline) {
         const pivot = parent?.steps[Math.floor(random() * parent.steps.length)]?.offset;
         const result = run(engine, input, { ...config, random, deadline, parent, pivot });
         if (result?.unsupported) unsupported[result.unsupported] = (unsupported[result.unsupported] || 0) + 1;
-        else if (result && (result.main2 || result.outcome[0] !== 0)) {
+        else if (result?.outcome) {
             runs.push(result);
             if (result.steps.length) pool = [...pool, result].sort((a, b) => compare(b.outcome, a.outcome)).slice(0, 24);
         }
     }
     const best = runs.sort((a, b) => compare(b.outcome, a.outcome))[0];
+    verifyTiedRoutes(runs, route => run(engine, input, { ...config, deadline: Date.now() + 350,
+        parent: route, pivot: Infinity }));
     const replay = best && run(engine, input, { ...config, deadline: Date.now() + 2000, parent: best, pivot: Infinity });
     const verified = Boolean(replay?.outcome && best.outcome.every((n, i) => n === replay.outcome[i]));
     return { attempts, settled: runs.length, wins: runs.filter(r => r.outcome[0] === 1).length,
         main2: runs.filter(r => r.main2).length, interrupted: runs.filter(r => r.interrupted).length,
         effects: runs.filter(r => r.effects).length, verified: Number(verified), unsupported,
-        best: verified ? best.outcome : null, pairs: verified ? shuffle(buildPairs(runs), random).slice(0, 180) : [] };
+        best: verified ? best.outcome : null, tiebreak: verified ? best.tiebreak : undefined, pairs: verified ? shuffle(buildPairs(runs), random).slice(0, 180) : [] };
 }
 
 function fit(weights, pairs) {

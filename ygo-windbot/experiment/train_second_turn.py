@@ -106,7 +106,7 @@ def report(output, counts, weights, heldout, status, deadline):
     write_json(output/"summary.json", summary)
     if weights:
         write_json(output/"second-turn-ranker.json", {"version": 1,
-            "objective": ["lethal", "opponent-field-removal", "damage-before-main2", "main2-board-score"],
+            "objective": ["lethal", "field-clears-plus-end-board", "damage", "deck-tiebreak"],
             "weights": {k: round(v, 8) for k,v in sorted(weights.items())}})
     print(json.dumps(summary), flush=True)
 

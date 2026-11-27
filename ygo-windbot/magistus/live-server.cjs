@@ -154,7 +154,7 @@ async function main() {
         throw new Error('Require --fixture, --data, --model, --upstream, and --game-port');
     const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
     const model = read(args.model);
-    if (model.version !== MODEL || !model.weights) throw new Error('Invalid Magistus model');
+    if (![MODEL, 'magistus-turn-ranker-v1'].includes(model.version) || !model.weights) throw new Error('Invalid Magistus model');
     const guides = read(args.guides || path.join(__dirname, 'live-guides.json'));
     const engine = await loadEngine(path.resolve(args.fixture), args.data.map(p => path.resolve(p)));
     const deck = readDeck(args.deck || path.join(__dirname, 'AI_Magistus.ydk'));
@@ -184,7 +184,8 @@ async function main() {
             if (request.method !== 'GET') return response.writeHead(405).end();
             const url = new URL(request.url, 'http://127.0.0.1');
             if (url.pathname === '/healthz') return response.writeHead(200, {
-                'Magistus-Second-Turn': runtime.secondModel?.version || 'disabled',
+                'Magistus-Second-Turn': runtime.model.tactics?.version || runtime.secondModel?.version || 'disabled',
+                'Magistus-Policy': runtime.model.version,
             }).end('ok');
             const deck = url.searchParams.get('deck');
             if (deck && deck !== LIVE_DECK) return relay(url, response, upstream);
